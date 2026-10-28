@@ -130,7 +130,7 @@ export const Settings = () => {
   };
 
   return (
-    <div className="space-y-8 max-w-4xl animate-fade-in text-slate-800">
+    <div className="space-y-6 w-full animate-fade-in text-slate-800">
       {toast && (
         <div className="fixed top-4 right-4 z-50 px-4 py-3 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-xl shadow-lg text-xs flex items-center gap-2 font-medium">
           <Check className="w-4 h-4 text-emerald-600" />

@@ -265,7 +265,7 @@ export const DataLog = () => {
   const dailyTarget = user?.dailyTarget || 100;
 
   return (
-    <div className="space-y-4 animate-fade-in text-slate-800 max-w-5xl mx-auto">
+    <div className="space-y-4 animate-fade-in text-slate-800 w-full">
       {/* Toast Notification */}
       {toastMessage && (
         <div
