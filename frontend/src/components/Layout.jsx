@@ -16,6 +16,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useQuery } from '@tanstack/react-query';
 import api from '../api/client';
+import { SidebarCalendar } from './SidebarCalendar';
 
 export const Layout = () => {
   const { user } = useAuth();
@@ -65,7 +66,7 @@ export const Layout = () => {
           collapsed ? 'w-16 p-2' : 'w-60 p-4'
         }`}
       >
-        <div>
+        <div className="overflow-y-auto pr-0.5 custom-scrollbar flex-1">
           {/* Header & Logo with Collapse Button */}
           <div className="flex items-center justify-between mb-5">
             <div className="flex items-center gap-2.5 overflow-hidden">
@@ -150,6 +151,9 @@ export const Layout = () => {
               );
             })}
           </nav>
+
+          {/* Interactive Activity Calendar with Morning/Night Diagonal Status */}
+          <SidebarCalendar collapsed={collapsed} />
         </div>
 
         {/* User bar & Theme toggle */}

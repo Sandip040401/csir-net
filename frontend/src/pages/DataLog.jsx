@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   ChevronLeft,
   ChevronRight,
@@ -50,11 +51,35 @@ export const DataLog = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
+  // Clear any legacy localStorage draft keys so they never interfere with database records
+  useEffect(() => {
+    try {
+      const keysToRemove = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && (key.startsWith('draft_') || key === 'last_slot' || key === 'last_chapterId')) {
+          keysToRemove.push(key);
+        }
+      }
+      keysToRemove.forEach((k) => localStorage.removeItem(k));
+    } catch (e) {}
+  }, []);
+
+  const [searchParams, setSearchParams] = useSearchParams();
+  const dateParam = searchParams.get('date');
+
   const [selectedDate, setSelectedDate] = useState(() => {
-    return new Date().toISOString().split('T')[0];
+    return dateParam || new Date().toISOString().split('T')[0];
   });
-  const [slot, setSlot] = useState(() => localStorage.getItem('last_slot') || 'morning');
-  const [kind, setKind] = useState(() => (slot === 'night' ? 'mock' : 'practice'));
+
+  useEffect(() => {
+    if (dateParam && dateParam !== selectedDate) {
+      setSelectedDate(dateParam);
+    }
+  }, [dateParam]);
+
+  const [slot, setSlot] = useState('morning');
+  const [kind, setKind] = useState('practice');
 
   const [chapterBlocks, setChapterBlocks] = useState([
     {
@@ -133,20 +158,8 @@ export const DataLog = () => {
       }
     }
 
-    // 2. Check if there is an unsaved draft specifically for this date & slot
-    const draft = localStorage.getItem(`draft_${selectedDate}_${slot}`);
-    if (draft) {
-      try {
-        const parsed = JSON.parse(draft);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setChapterBlocks(parsed);
-          return;
-        }
-      } catch (e) {}
-    }
-
-    // 3. Otherwise, initialize fresh empty entry block for this date
-    const defaultChId = localStorage.getItem('last_chapterId') || (chapters[0]?._id || '');
+    // 2. No saved data for this date and slot: initialize clean empty block
+    const defaultChId = chapters[0]?._id || '';
     setChapterBlocks([
       {
         id: 'block-1',
@@ -161,7 +174,6 @@ export const DataLog = () => {
   const handleSlotChange = (newSlot) => {
     setSlot(newSlot);
     setKind(newSlot === 'night' ? 'mock' : 'practice');
-    localStorage.setItem('last_slot', newSlot);
   };
 
   const shiftDay = (days) => {
@@ -169,15 +181,6 @@ export const DataLog = () => {
     d.setDate(d.getDate() + days);
     setSelectedDate(d.toISOString().split('T')[0]);
   };
-
-  useEffect(() => {
-    const hasAnyEntries = chapterBlocks.some((b) => b.entries && b.entries.length > 0);
-    if (hasAnyEntries) {
-      localStorage.setItem(`draft_${selectedDate}_${slot}`, JSON.stringify(chapterBlocks));
-    } else {
-      localStorage.removeItem(`draft_${selectedDate}_${slot}`);
-    }
-  }, [chapterBlocks, selectedDate, slot]);
 
   const updateBlock = (blockId, updates) => {
     setChapterBlocks((prev) =>
@@ -190,8 +193,20 @@ export const DataLog = () => {
       setLastSavedSnapshot(JSON.parse(JSON.stringify(chapterBlocks)));
       let savedCount = 0;
 
+      // Identify sessions in daySessionsData that are no longer in chapterBlocks or have no entries
+      const currentMatchingSessions = (daySessionsData || []).filter((s) => s.slot === slot);
+
       for (const block of chapterBlocks) {
-        if (!block.chapterId || block.entries.length === 0) continue;
+        if (!block.chapterId) continue;
+
+        // If block has no entries but had a sessionId in DB, delete the DB session
+        if (block.entries.length === 0) {
+          if (block.sessionId) {
+            await api.delete(`/sessions/${block.sessionId}`);
+            savedCount++;
+          }
+          continue;
+        }
 
         const payload = {
           date: selectedDate,
@@ -219,14 +234,25 @@ export const DataLog = () => {
         savedCount++;
       }
 
-      localStorage.removeItem(`draft_${selectedDate}_${slot}`);
+      // Check if any previously saved sessions were completely removed from chapterBlocks
+      for (const oldSess of currentMatchingSessions) {
+        const stillPresent = chapterBlocks.some(
+          (b) => b.sessionId === oldSess._id || b.chapterId === (oldSess.chapterId?._id || oldSess.chapterId)
+        );
+        if (!stillPresent) {
+          await api.delete(`/sessions/${oldSess._id}`);
+          savedCount++;
+        }
+      }
+
       return savedCount;
     },
     onSuccess: (count) => {
       refetchDaySessions();
       queryClient.invalidateQueries({ queryKey: ['quick-kpis'] });
       queryClient.invalidateQueries({ queryKey: ['analytics-overview'] });
-      showToast(count > 0 ? `Saved ${count} session block${count === 1 ? '' : 's'}!` : 'No entries to save.');
+      queryClient.invalidateQueries({ queryKey: ['month-sessions'] });
+      showToast(count > 0 ? `Saved updates successfully!` : 'No entries to save.');
     },
     onError: (err) => {
       showToast(err.response?.data?.error || 'Failed to save session.', 'error');
@@ -270,9 +296,23 @@ export const DataLog = () => {
     ]);
   };
 
-  const removeChapterBlock = (blockId) => {
+  const removeChapterBlock = async (blockId) => {
+    const blockToRemove = chapterBlocks.find((b) => b.id === blockId);
+    if (blockToRemove?.sessionId) {
+      try {
+        await api.delete(`/sessions/${blockToRemove.sessionId}`);
+        refetchDaySessions();
+        queryClient.invalidateQueries({ queryKey: ['quick-kpis'] });
+        queryClient.invalidateQueries({ queryKey: ['analytics-overview'] });
+        queryClient.invalidateQueries({ queryKey: ['month-sessions'] });
+        showToast('Chapter session deleted from database.', 'info');
+      } catch (err) {
+        console.error('Failed to delete session:', err);
+      }
+    }
+
     if (chapterBlocks.length === 1) {
-      updateBlock(blockId, { entries: [] });
+      updateBlock(blockId, { entries: [], sessionId: null });
       return;
     }
     setChapterBlocks((prev) => prev.filter((b) => b.id !== blockId));
@@ -415,9 +455,12 @@ export const DataLog = () => {
             chapters={chapters}
             allTopics={allTopics}
             slot={slot}
+            kind={kind}
+            selectedDate={selectedDate}
             onUpdateBlock={(updates) => updateBlock(block.id, updates)}
             onRemoveBlock={() => removeChapterBlock(block.id)}
             refetchAllTopics={refetchAllTopics}
+            refetchDaySessions={refetchDaySessions}
           />
         ))}
       </div>
@@ -444,10 +487,14 @@ const ChapterEntryBlock = ({
   chapters,
   allTopics,
   slot,
+  kind,
+  selectedDate,
   onUpdateBlock,
   onRemoveBlock,
   refetchAllTopics,
+  refetchDaySessions,
 }) => {
+  const queryClient = useQueryClient();
   const currentChapter = chapters.find((c) => c._id === block.chapterId);
   const isPartA = currentChapter?.isPartA;
 
@@ -621,9 +668,49 @@ const ChapterEntryBlock = ({
     updateEntryCell(index, field, nextVal);
   };
 
-  const removeRow = (index) => {
+  const removeRow = async (index) => {
     const updated = block.entries.filter((_, i) => i !== index);
     onUpdateBlock({ entries: updated });
+
+    // If this session has already been saved in the database, sync the deletion immediately
+    if (block.sessionId) {
+      try {
+        if (updated.length === 0) {
+          // If all rows removed, delete the session record entirely
+          await api.delete(`/sessions/${block.sessionId}`);
+          onUpdateBlock({ entries: [], sessionId: null });
+        } else {
+          // Otherwise, update the session entries in the DB
+          await api.put('/sessions', {
+            date: selectedDate,
+            slot,
+            kind,
+            chapterId: block.chapterId,
+            timeTakenMin: block.timeTakenMin ? Number(block.timeTakenMin) : null,
+            notes: block.notes || '',
+            entries: updated.map((e) => ({
+              topicId: e.topicId,
+              topicCode: e.topicCode,
+              topicName: e.topicName,
+              total: Number(e.total || 0),
+              right: Number(e.right || 0),
+              wrong: Number(e.wrong || 0),
+              bTotal: Number(e.bTotal || 0),
+              cTotal: Number(e.cTotal || 0),
+              bRight: e.bRight !== '' && e.bRight !== null ? Number(e.bRight) : null,
+              skipped: Number(e.skipped || 0),
+              mistakeTags: e.mistakeTags || [],
+            })),
+          });
+        }
+        refetchDaySessions();
+        queryClient.invalidateQueries({ queryKey: ['quick-kpis'] });
+        queryClient.invalidateQueries({ queryKey: ['analytics-overview'] });
+        queryClient.invalidateQueries({ queryKey: ['month-sessions'] });
+      } catch (err) {
+        console.error('Failed to sync row deletion to database:', err);
+      }
+    }
   };
 
   const toggleRowTags = (index) => {

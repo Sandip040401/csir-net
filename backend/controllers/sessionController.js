@@ -80,6 +80,18 @@ export const upsertSession = async (req, res, next) => {
       return res.status(404).json({ success: false, error: 'Chapter not found' });
     }
 
+    // If entries are empty, delete the existing session if any exists
+    if (!data.entries || data.entries.length === 0) {
+      await Session.findOneAndDelete({
+        userId: req.user._id,
+        date: data.date,
+        slot: data.slot,
+        kind: data.kind,
+        chapterId: data.chapterId,
+      });
+      return res.json({ success: true, message: 'Session deleted because entries were empty', data: null });
+    }
+
     // Populate topic details for entries if missing
     const enrichedEntries = await Promise.all(
       data.entries.map(async (entry) => {
@@ -91,17 +103,6 @@ export const upsertSession = async (req, res, next) => {
             topicCode = t.code;
             topicName = t.name;
           }
-        }
-
-        // Verification of business invariants
-        const total = entry.total;
-        const right = entry.right;
-        const wrong = entry.wrong;
-        const skipped = entry.skipped || 0;
-
-        // Invariant 1: right + wrong + skipped == total
-        if (right + wrong + skipped !== total) {
-          // Soft-adjust or validate
         }
 
         // Invariant 2: if Part A, bTotal = cTotal = 0
