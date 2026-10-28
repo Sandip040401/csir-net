@@ -101,6 +101,7 @@ export const DataLog = () => {
   });
 
   useEffect(() => {
+    // 1. Check if there is saved session data for this selectedDate and slot
     if (daySessionsData && daySessionsData.length > 0) {
       const matching = daySessionsData.filter((s) => s.slot === slot);
       if (matching.length > 0) {
@@ -132,33 +133,29 @@ export const DataLog = () => {
       }
     }
 
+    // 2. Check if there is an unsaved draft specifically for this date & slot
     const draft = localStorage.getItem(`draft_${selectedDate}_${slot}`);
     if (draft) {
       try {
-        setChapterBlocks(JSON.parse(draft));
-        return;
+        const parsed = JSON.parse(draft);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setChapterBlocks(parsed);
+          return;
+        }
       } catch (e) {}
     }
 
-    const lastChId = localStorage.getItem('last_chapterId') || (chapters[0]?._id || '');
-    setChapterBlocks((prev) => {
-      // If user already picked a chapter or has entries, preserve it
-      if (prev.length === 1 && !prev[0].chapterId && lastChId) {
-        return [{ ...prev[0], chapterId: lastChId }];
-      }
-      if (prev.length > 0 && prev[0].chapterId) {
-        return prev;
-      }
-      return [
-        {
-          id: 'block-1',
-          chapterId: lastChId,
-          timeTakenMin: '',
-          notes: '',
-          entries: [],
-        },
-      ];
-    });
+    // 3. Otherwise, initialize fresh empty entry block for this date
+    const defaultChId = localStorage.getItem('last_chapterId') || (chapters[0]?._id || '');
+    setChapterBlocks([
+      {
+        id: 'block-1',
+        chapterId: defaultChId,
+        timeTakenMin: '',
+        notes: '',
+        entries: [],
+      },
+    ]);
   }, [daySessionsData, selectedDate, slot, chapters]);
 
   const handleSlotChange = (newSlot) => {
