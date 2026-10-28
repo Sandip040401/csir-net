@@ -9,17 +9,11 @@ import {
   Tag,
   Check,
   AlertTriangle,
-  FileText,
   HelpCircle,
   Search,
-  MoreVertical,
-  EyeOff,
-  Edit2,
   X,
   Sun,
   Moon,
-  ChevronDown,
-  ChevronUp,
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../api/client';
@@ -34,11 +28,20 @@ const ThemeToggleBtn = () => {
     <button
       type="button"
       onClick={toggleTheme}
-      title={isDark ? 'Switch to Light Mode' : 'Switch to Night/Dark Mode'}
-      className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors flex items-center gap-1.5 text-xs font-medium"
+      title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+      className="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white transition-colors flex items-center gap-1.5 text-xs font-semibold cursor-pointer shadow-2xs"
     >
-      {isDark ? <Sun className="w-3.5 h-3.5 text-amber-400" /> : <Moon className="w-3.5 h-3.5 text-slate-500" />}
-      <span className="hidden md:inline">{isDark ? 'Light' : 'Night'}</span>
+      {isDark ? (
+        <>
+          <Sun className="w-3.5 h-3.5 text-amber-400" />
+          <span>Light Mode</span>
+        </>
+      ) : (
+        <>
+          <Moon className="w-3.5 h-3.5 text-slate-600" />
+          <span>Dark Mode</span>
+        </>
+      )}
     </button>
   );
 };
@@ -138,15 +141,24 @@ export const DataLog = () => {
     }
 
     const lastChId = localStorage.getItem('last_chapterId') || (chapters[0]?._id || '');
-    setChapterBlocks([
-      {
-        id: 'block-1',
-        chapterId: lastChId,
-        timeTakenMin: '',
-        notes: '',
-        entries: [],
-      },
-    ]);
+    setChapterBlocks((prev) => {
+      // If user already picked a chapter or has entries, preserve it
+      if (prev.length === 1 && !prev[0].chapterId && lastChId) {
+        return [{ ...prev[0], chapterId: lastChId }];
+      }
+      if (prev.length > 0 && prev[0].chapterId) {
+        return prev;
+      }
+      return [
+        {
+          id: 'block-1',
+          chapterId: lastChId,
+          timeTakenMin: '',
+          notes: '',
+          entries: [],
+        },
+      ];
+    });
   }, [daySessionsData, selectedDate, slot, chapters]);
 
   const handleSlotChange = (newSlot) => {
@@ -283,28 +295,28 @@ export const DataLog = () => {
   const dailyTarget = user?.dailyTarget || 100;
 
   return (
-    <div className="space-y-4 animate-fade-in text-slate-800 w-full">
+    <div className="space-y-4 animate-fade-in w-full">
       {/* Toast Notification */}
       {toastMessage && (
         <div
           className={`fixed top-4 right-4 z-50 px-3.5 py-2 rounded-xl shadow-lg border text-xs flex items-center gap-2 transition-all ${
             toastMessage.type === 'error'
-              ? 'bg-red-50 text-red-800 border-red-200'
+              ? 'bg-red-50 text-red-800 border-red-200 dark:bg-red-950/90 dark:text-red-200 dark:border-red-800'
               : toastMessage.type === 'info'
-              ? 'bg-blue-50 text-blue-800 border-blue-200'
-              : 'bg-emerald-50 text-emerald-800 border-emerald-200'
+              ? 'bg-blue-50 text-blue-800 border-blue-200 dark:bg-blue-950/90 dark:text-blue-200 dark:border-blue-800'
+              : 'bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-950/90 dark:text-emerald-200 dark:border-emerald-800'
           }`}
         >
           {toastMessage.type === 'error' ? (
-            <AlertTriangle className="w-4 h-4 text-red-600" />
+            <AlertTriangle className="w-4 h-4 text-red-600 dark:text-red-400" />
           ) : (
-            <Check className="w-4 h-4 text-emerald-600" />
+            <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
           )}
           <span>{toastMessage.msg}</span>
           {lastSavedSnapshot && (
             <button
               onClick={handleUndo}
-              className="ml-2 px-1.5 py-0.5 rounded bg-white border border-slate-300 text-[10px] font-bold uppercase text-slate-700 hover:bg-slate-50"
+              className="ml-2 px-1.5 py-0.5 rounded bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 text-[10px] font-bold uppercase text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
             >
               Undo
             </button>
@@ -312,14 +324,14 @@ export const DataLog = () => {
         </div>
       )}
 
-      {/* Clean, Compact Top Controls Bar */}
-      <div className="bg-white border border-slate-200 rounded-xl px-4 py-3 shadow-xs flex flex-wrap items-center justify-between gap-3">
+      {/* Top Controls Bar with complete Dark & Light Theme classes */}
+      <div className="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 shadow-xs flex flex-wrap items-center justify-between gap-3">
         {/* Date Navigator */}
         <div className="flex items-center gap-1.5">
           <button
             onClick={() => shiftDay(-1)}
             title="Previous Day"
-            className="p-1.5 rounded-lg bg-slate-50 border border-slate-200 text-slate-600 hover:text-slate-900 transition-colors"
+            className="p-1.5 rounded-lg bg-slate-50 dark:bg-[#161f30] border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
@@ -328,34 +340,34 @@ export const DataLog = () => {
             type="date"
             value={selectedDate}
             onChange={(e) => setSelectedDate(e.target.value)}
-            className="bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 text-xs text-slate-800 font-medium focus:outline-none focus:border-blue-500"
+            className="bg-slate-50 dark:bg-[#161f30] border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1 text-xs text-slate-800 dark:text-slate-200 font-medium focus:outline-none focus:border-blue-500"
           />
 
           <button
             onClick={() => shiftDay(1)}
             title="Next Day"
-            className="p-1.5 rounded-lg bg-slate-50 border border-slate-200 text-slate-600 hover:text-slate-900 transition-colors"
+            className="p-1.5 rounded-lg bg-slate-50 dark:bg-[#161f30] border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors"
           >
             <ChevronRight className="w-4 h-4" />
           </button>
 
           <button
             onClick={() => setSelectedDate(new Date().toISOString().split('T')[0])}
-            className="text-xs font-semibold text-blue-600 hover:underline px-1.5"
+            className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline px-1.5"
           >
             Today
           </button>
         </div>
 
         {/* Slot Toggle [Morning Practice | Night Mock] */}
-        <div className="flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200 text-xs">
+        <div className="flex items-center bg-slate-100 dark:bg-[#161f30] p-0.5 rounded-lg border border-slate-200 dark:border-slate-800 text-xs">
           <button
             type="button"
             onClick={() => handleSlotChange('morning')}
             className={`px-3 py-1 rounded-md font-semibold transition-all ${
               slot === 'morning'
-                ? 'bg-white text-blue-600 shadow-xs'
-                : 'text-slate-600 hover:text-slate-900'
+                ? 'bg-white dark:bg-[#1f293d] text-blue-600 dark:text-blue-400 shadow-xs'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
             ☀️ Morning Practice
@@ -365,8 +377,8 @@ export const DataLog = () => {
             onClick={() => handleSlotChange('night')}
             className={`px-3 py-1 rounded-md font-semibold transition-all ${
               slot === 'night'
-                ? 'bg-white text-indigo-600 shadow-xs'
-                : 'text-slate-600 hover:text-slate-900'
+                ? 'bg-white dark:bg-[#1f293d] text-indigo-600 dark:text-indigo-400 shadow-xs'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
             🌙 Night Mock
@@ -415,9 +427,9 @@ export const DataLog = () => {
         <button
           type="button"
           onClick={addChapterBlock}
-          className="px-3.5 py-1.5 rounded-xl border border-dashed border-slate-300 hover:border-blue-500 text-slate-600 hover:text-blue-600 bg-white text-xs font-medium flex items-center gap-1.5 transition-all shadow-2xs"
+          className="px-3.5 py-1.5 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 hover:border-blue-500 text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 bg-white dark:bg-[#111827] text-xs font-medium flex items-center gap-1.5 transition-all shadow-2xs"
         >
-          <Plus className="w-3.5 h-3.5 text-blue-600" />
+          <Plus className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
           <span>Add another chapter</span>
         </button>
       </div>
@@ -425,7 +437,7 @@ export const DataLog = () => {
   );
 };
 
-// Subcomponent: Individual Chapter Block (Clutter-free and compact)
+// Subcomponent: Individual Chapter Block with full dark/night support
 const ChapterEntryBlock = ({
   blockIndex,
   block,
@@ -461,7 +473,6 @@ const ChapterEntryBlock = ({
     setIsInlineAdding(false);
   };
 
-  // Add topic with 0 initial values (no dummy numbers)
   const addTopicRow = (topic, shouldFocus = false) => {
     if (block.entries.some((e) => e.topicId === topic._id)) return;
 
@@ -636,14 +647,14 @@ const ChapterEntryBlock = ({
   };
 
   return (
-    <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-xs space-y-3">
+    <div className="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-xs space-y-3">
       {/* Chapter header bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 pb-2.5 border-b border-slate-100">
+      <div className="flex flex-wrap items-center justify-between gap-3 pb-2.5 border-b border-slate-100 dark:border-slate-800">
         <div className="flex items-center gap-3 flex-1 min-w-[260px]">
           <select
             value={block.chapterId}
             onChange={(e) => handleChapterSelect(e.target.value)}
-            className="w-full max-w-sm px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-800 focus:outline-none focus:border-blue-500"
+            className="w-full max-w-sm px-3 py-1.5 bg-slate-50 dark:bg-[#161f30] border border-slate-200 dark:border-slate-800 rounded-lg text-xs font-semibold text-slate-800 dark:text-slate-200 focus:outline-none focus:border-blue-500"
           >
             <option value="">-- Choose Chapter --</option>
             {chapters.map((ch) => (
@@ -654,7 +665,7 @@ const ChapterEntryBlock = ({
           </select>
 
           {slot === 'night' && (
-            <div className="flex items-center gap-1.5 text-xs text-slate-600">
+            <div className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400">
               <Clock className="w-3.5 h-3.5 text-indigo-500" />
               <input
                 type="number"
@@ -663,7 +674,7 @@ const ChapterEntryBlock = ({
                 placeholder="Time (min)"
                 value={block.timeTakenMin}
                 onChange={(e) => onUpdateBlock({ timeTakenMin: e.target.value })}
-                className="w-20 px-2 py-1 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800"
+                className="w-20 px-2 py-1 bg-slate-50 dark:bg-[#161f30] border border-slate-200 dark:border-slate-800 rounded-lg text-xs text-slate-800 dark:text-slate-200"
               />
             </div>
           )}
@@ -675,8 +686,8 @@ const ChapterEntryBlock = ({
             onClick={() => setShowNotes(!showNotes)}
             className={`text-[11px] font-medium px-2 py-1 rounded-md border transition-colors ${
               showNotes
-                ? 'bg-blue-50 text-blue-600 border-blue-200'
-                : 'text-slate-500 border-slate-200 hover:bg-slate-50'
+                ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800'
+                : 'text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800'
             }`}
           >
             {showNotes ? 'Hide notes' : '+ Notes'}
@@ -686,7 +697,7 @@ const ChapterEntryBlock = ({
             type="button"
             onClick={onRemoveBlock}
             title="Remove Chapter"
-            className="text-slate-400 hover:text-red-500 p-1 rounded-md hover:bg-red-50"
+            className="text-slate-400 hover:text-red-500 p-1 rounded-md hover:bg-red-50 dark:hover:bg-red-950/30"
           >
             <Trash2 className="w-4 h-4" />
           </button>
@@ -721,7 +732,7 @@ const ChapterEntryBlock = ({
                     }
                   }
                 }}
-                className="w-full pl-7 pr-2.5 py-1 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:outline-none focus:border-blue-500"
+                className="w-full pl-7 pr-2.5 py-1 bg-slate-50 dark:bg-[#161f30] border border-slate-200 dark:border-slate-800 rounded-lg text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:border-blue-500"
               />
             </div>
 
@@ -729,26 +740,26 @@ const ChapterEntryBlock = ({
               <button
                 type="button"
                 onClick={handleAddAll}
-                className="text-blue-600 hover:underline font-medium"
+                className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
               >
                 + Add all
               </button>
-              <span className="text-slate-300">•</span>
+              <span className="text-slate-300 dark:text-slate-700">•</span>
               <button
                 type="button"
                 onClick={handleLoadLastTopics}
-                className="text-indigo-600 hover:underline font-medium"
+                className="text-indigo-600 dark:text-indigo-400 hover:underline font-medium"
               >
                 ↻ Last used
               </button>
-              <span className="text-slate-300">•</span>
+              <span className="text-slate-300 dark:text-slate-700">•</span>
               <button
                 type="button"
                 onClick={() => {
                   setIsInlineAdding(true);
                   setInlineTopicName(topicSearchQuery || '');
                 }}
-                className="text-emerald-600 hover:underline font-semibold"
+                className="text-emerald-600 dark:text-emerald-400 hover:underline font-semibold"
               >
                 + Custom
               </button>
@@ -757,8 +768,8 @@ const ChapterEntryBlock = ({
 
           {/* Quick single-tap Add "<typed text>" if no match */}
           {topicSearchQuery.trim() && filteredTopics.length === 0 && (
-            <div className="p-2 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-between text-xs">
-              <span className="text-blue-900">
+            <div className="p-2 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 rounded-lg flex items-center justify-between text-xs">
+              <span className="text-blue-900 dark:text-blue-200">
                 Topic not in list: "<strong>{topicSearchQuery.trim()}</strong>"
               </span>
               <button
@@ -773,7 +784,7 @@ const ChapterEntryBlock = ({
 
           {/* Inline Add input */}
           {isInlineAdding && (
-            <div className="p-2 bg-slate-50 border border-slate-200 rounded-lg flex items-center gap-2 text-xs">
+            <div className="p-2 bg-slate-50 dark:bg-[#161f30] border border-slate-200 dark:border-slate-800 rounded-lg flex items-center gap-2 text-xs">
               <input
                 type="text"
                 autoFocus
@@ -788,7 +799,7 @@ const ChapterEntryBlock = ({
                     setIsInlineAdding(false);
                   }
                 }}
-                className="flex-1 px-2.5 py-1 bg-white border border-slate-200 rounded text-xs text-slate-800"
+                className="flex-1 px-2.5 py-1 bg-white dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-700 rounded text-xs text-slate-800 dark:text-slate-200"
               />
               <button
                 type="button"
@@ -807,7 +818,7 @@ const ChapterEntryBlock = ({
             </div>
           )}
 
-          {/* Clean, minimalist Topic Chips list */}
+          {/* Minimalist Topic Chips list */}
           <div className="flex flex-wrap gap-1 max-h-24 overflow-y-auto pr-1">
             {filteredTopics.map((topic) => {
               const isSelected = block.entries.some((e) => e.topicId === topic._id);
@@ -821,16 +832,16 @@ const ChapterEntryBlock = ({
                   disabled={isSelected}
                   className={`text-[11px] px-2 py-0.5 rounded border transition-all text-left flex items-center gap-1 ${
                     isSelected
-                      ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-default opacity-50'
-                      : 'bg-white text-slate-700 border-slate-200 hover:border-blue-400 hover:text-blue-600'
+                      ? 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border-slate-200 dark:border-slate-700 cursor-default opacity-50'
+                      : 'bg-white dark:bg-[#161f30] text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-blue-400 hover:text-blue-600 dark:hover:text-blue-400'
                   }`}
                 >
-                  <span className="font-mono text-[9px] font-bold text-blue-600">
+                  <span className="font-mono text-[9px] font-bold text-blue-600 dark:text-blue-400">
                     {topic.code}
                   </span>
                   <span className="truncate max-w-[170px]">{topic.name}</span>
                   {topic.isCustom && (
-                    <span className="text-[8px] px-1 rounded bg-amber-50 text-amber-700 border border-amber-200 font-bold uppercase">
+                    <span className="text-[8px] px-1 rounded bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800 font-bold uppercase">
                       custom
                     </span>
                   )}
@@ -843,9 +854,9 @@ const ChapterEntryBlock = ({
 
       {/* Grid Table */}
       {block.entries.length > 0 && (
-        <div className="overflow-x-auto rounded-lg border border-slate-200">
-          <table className="w-full text-left text-xs text-slate-700">
-            <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider text-[10px] font-bold border-b border-slate-200">
+        <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-800">
+          <table className="w-full text-left text-xs text-slate-700 dark:text-slate-300">
+            <thead className="bg-slate-50 dark:bg-[#161f30] text-slate-500 dark:text-slate-400 uppercase tracking-wider text-[10px] font-bold border-b border-slate-200 dark:border-slate-800">
               <tr>
                 <th className="py-1.5 px-3 min-w-[200px]">Topic</th>
                 <th className="py-1.5 px-1.5 w-24 text-center">Total</th>
@@ -861,7 +872,7 @@ const ChapterEntryBlock = ({
                 <th className="py-1.5 px-1 text-center w-8"></th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 bg-white">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-[#111827]">
               {block.entries.map((entry, idx) => {
                 const tot = Number(entry.total || 0);
                 const r = Number(entry.right || 0);
@@ -869,17 +880,17 @@ const ChapterEntryBlock = ({
 
                 return (
                   <React.Fragment key={entry.topicId || idx}>
-                    <tr className="hover:bg-slate-50/50">
+                    <tr className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
                       <td className="py-1.5 px-3">
                         <div className="flex items-center gap-1.5">
-                          <span className="font-mono font-bold text-blue-600 text-[10px]">
+                          <span className="font-mono font-bold text-blue-600 dark:text-blue-400 text-[10px]">
                             {entry.topicCode}
                           </span>
-                          <span className="font-medium text-slate-900 truncate max-w-[220px]">
+                          <span className="font-medium text-slate-900 dark:text-slate-100 truncate max-w-[220px]">
                             {entry.topicName}
                           </span>
                           {entry.isCustom && (
-                            <span className="text-[8px] px-1 rounded bg-amber-50 text-amber-700 border border-amber-200 font-bold uppercase">
+                            <span className="text-[8px] px-1 rounded bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800 font-bold uppercase">
                               custom
                             </span>
                           )}
@@ -893,8 +904,8 @@ const ChapterEntryBlock = ({
                             onClick={() => toggleRowTags(idx)}
                             className={`ml-1 text-[10px] px-1 rounded border transition-colors ${
                               (entry.mistakeTags || []).length > 0 || entry.showTags
-                                ? 'bg-amber-50 text-amber-700 border-amber-300 font-bold'
-                                : 'text-slate-400 border-transparent hover:border-slate-200'
+                                ? 'bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-700 font-bold'
+                                : 'text-slate-400 border-transparent hover:border-slate-200 dark:hover:border-slate-700'
                             }`}
                           >
                             tag
@@ -914,7 +925,7 @@ const ChapterEntryBlock = ({
                       <td className="py-1 px-1 text-center">
                         <StepperInput
                           value={entry.right}
-                          className="text-emerald-600 font-bold"
+                          className="text-emerald-600 dark:text-emerald-400 font-bold"
                           onChange={(v) => updateEntryCell(idx, 'right', v)}
                           onStep={(d) => stepValue(idx, 'right', d)}
                         />
@@ -923,7 +934,7 @@ const ChapterEntryBlock = ({
                       <td className="py-1 px-1 text-center">
                         <StepperInput
                           value={entry.wrong}
-                          className="text-red-600 font-bold"
+                          className="text-red-600 dark:text-red-400 font-bold"
                           onChange={(v) => updateEntryCell(idx, 'wrong', v)}
                           onStep={(d) => stepValue(idx, 'wrong', d)}
                         />
@@ -952,12 +963,12 @@ const ChapterEntryBlock = ({
                         <span
                           className={
                             tot === 0
-                              ? 'text-slate-400'
+                              ? 'text-slate-400 dark:text-slate-600'
                               : acc >= 75
-                              ? 'text-emerald-600'
+                              ? 'text-emerald-600 dark:text-emerald-400'
                               : acc >= 50
-                              ? 'text-amber-600'
-                              : 'text-red-600'
+                              ? 'text-amber-600 dark:text-amber-400'
+                              : 'text-red-600 dark:text-red-400'
                           }
                         >
                           {tot === 0 ? '—' : `${acc}%`}
@@ -968,19 +979,19 @@ const ChapterEntryBlock = ({
                         <button
                           type="button"
                           onClick={() => removeRow(idx)}
-                          className="text-slate-300 hover:text-red-500 p-0.5"
+                          className="text-slate-300 dark:text-slate-600 hover:text-red-500 p-0.5"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </td>
                     </tr>
 
-                    {/* Compact expandable mistake tags */}
+                    {/* Compact mistake tags row */}
                     {entry.showTags && (
                       <tr>
-                        <td colSpan={isPartA ? 6 : 8} className="px-3 py-1 bg-slate-50/70 border-b border-slate-100">
+                        <td colSpan={isPartA ? 6 : 8} className="px-3 py-1 bg-slate-50/70 dark:bg-[#161f30]/60 border-b border-slate-100 dark:border-slate-800">
                           <div className="flex flex-wrap items-center gap-1.5 text-[10px]">
-                            <span className="text-slate-500 font-medium">Error tags:</span>
+                            <span className="text-slate-500 dark:text-slate-400 font-medium">Error tags:</span>
                             {MISTAKE_OPTIONS.map((tag) => {
                               const isTagged = (entry.mistakeTags || []).includes(tag);
                               return (
@@ -990,8 +1001,8 @@ const ChapterEntryBlock = ({
                                   onClick={() => toggleMistakeTag(idx, tag)}
                                   className={`px-1.5 py-0.2 rounded border transition-colors ${
                                     isTagged
-                                      ? 'bg-amber-100 text-amber-800 border-amber-300 font-bold'
-                                      : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-100'
+                                      ? 'bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-700 font-bold'
+                                      : 'bg-white dark:bg-[#111827] text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800'
                                   }`}
                                 >
                                   {tag}
@@ -999,14 +1010,14 @@ const ChapterEntryBlock = ({
                               );
                             })}
 
-                            <div className="ml-auto flex items-center gap-1 text-slate-500">
+                            <div className="ml-auto flex items-center gap-1 text-slate-500 dark:text-slate-400">
                               <span>Skipped:</span>
                               <input
                                 type="number"
                                 inputMode="numeric"
                                 value={entry.skipped || 0}
                                 onChange={(e) => updateEntryCell(idx, 'skipped', e.target.value)}
-                                className="w-8 px-1 py-0.2 bg-white border border-slate-200 rounded text-center text-[10px]"
+                                className="w-8 px-1 py-0.2 bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-700 rounded text-center text-[10px] text-slate-800 dark:text-slate-200"
                               />
                             </div>
                           </div>
@@ -1018,29 +1029,29 @@ const ChapterEntryBlock = ({
               })}
             </tbody>
             {/* Totals Row */}
-            <tfoot className="bg-slate-50 font-bold text-slate-900 text-xs border-t border-slate-200">
+            <tfoot className="bg-slate-50 dark:bg-[#161f30] font-bold text-slate-900 dark:text-white text-xs border-t border-slate-200 dark:border-slate-800">
               <tr>
                 <td className="py-2 px-3">Total / Chapter</td>
-                <td className="py-2 px-1 text-center">
+                <td className="py-2 px-1 text-center font-mono">
                   {block.entries.reduce((s, e) => s + Number(e.total || 0), 0)}
                 </td>
-                <td className="py-2 px-1 text-center text-emerald-600">
+                <td className="py-2 px-1 text-center font-mono text-emerald-600 dark:text-emerald-400">
                   {block.entries.reduce((s, e) => s + Number(e.right || 0), 0)}
                 </td>
-                <td className="py-2 px-1 text-center text-red-600">
+                <td className="py-2 px-1 text-center font-mono text-red-600 dark:text-red-400">
                   {block.entries.reduce((s, e) => s + Number(e.wrong || 0), 0)}
                 </td>
                 {!isPartA && (
                   <>
-                    <td className="py-2 px-1 text-center">
+                    <td className="py-2 px-1 text-center font-mono">
                       {block.entries.reduce((s, e) => s + Number(e.bTotal || 0), 0)}
                     </td>
-                    <td className="py-2 px-1 text-center">
+                    <td className="py-2 px-1 text-center font-mono">
                       {block.entries.reduce((s, e) => s + Number(e.cTotal || 0), 0)}
                     </td>
                   </>
                 )}
-                <td className="py-2 px-2 text-center text-blue-600">
+                <td className="py-2 px-2 text-center text-blue-600 dark:text-blue-400 font-mono">
                   {(() => {
                     const tot = block.entries.reduce((s, e) => s + Number(e.total || 0), 0);
                     const r = block.entries.reduce((s, e) => s + Number(e.right || 0), 0);
@@ -1061,8 +1072,8 @@ const ChapterEntryBlock = ({
             rows={2}
             value={block.notes}
             onChange={(e) => onUpdateBlock({ notes: e.target.value })}
-            placeholder="Session notes / formula observations..."
-            className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-500"
+            placeholder="Session notes / observations..."
+            className="w-full px-3 py-1.5 bg-slate-50 dark:bg-[#161f30] border border-slate-200 dark:border-slate-800 rounded-lg text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:border-blue-500"
           />
         </div>
       )}
@@ -1072,12 +1083,12 @@ const ChapterEntryBlock = ({
 
 const StepperInput = ({ value, onChange, onStep, className = '', dataAttribute }) => {
   return (
-    <div className="inline-flex items-center rounded border border-slate-200 bg-white overflow-hidden shadow-2xs">
+    <div className="inline-flex items-center rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#161f30] overflow-hidden shadow-2xs">
       <button
         type="button"
         tabIndex={-1}
         onClick={() => onStep(-1)}
-        className="px-1 py-0.5 text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition-colors font-bold text-xs"
+        className="px-1 py-0.5 text-slate-400 dark:text-slate-500 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors font-bold text-xs"
       >
         -
       </button>
@@ -1088,13 +1099,13 @@ const StepperInput = ({ value, onChange, onStep, className = '', dataAttribute }
         min="0"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className={`w-10 text-center bg-transparent py-0.5 text-xs focus:outline-none focus:bg-blue-50 font-medium ${className}`}
+        className={`w-10 text-center bg-transparent py-0.5 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:bg-blue-50 dark:focus:bg-blue-900/20 font-medium ${className}`}
       />
       <button
         type="button"
         tabIndex={-1}
         onClick={() => onStep(1)}
-        className="px-1 py-0.5 text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition-colors font-bold text-xs"
+        className="px-1 py-0.5 text-slate-400 dark:text-slate-500 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors font-bold text-xs"
       >
         +
       </button>

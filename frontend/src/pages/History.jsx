@@ -90,17 +90,17 @@ export const History = () => {
 
         <button
           onClick={handleExportCSV}
-          className="px-4 py-2 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 flex items-center gap-2 self-start sm:self-auto transition-colors shadow-xs"
+          className="px-4 py-2 bg-white dark:bg-[#111827] hover:bg-slate-50 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-2 self-start sm:self-auto transition-colors shadow-xs"
         >
-          <Download className="w-4 h-4 text-blue-600" />
+          <Download className="w-4 h-4 text-blue-600 dark:text-blue-400" />
           <span>Export All to CSV</span>
         </button>
       </div>
 
       {/* Filter Toolbar */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs shadow-xs">
+      <div className="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-2xl p-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs shadow-xs">
         <div>
-          <label className="block text-slate-500 mb-1 font-semibold">Search Topic / Keyword</label>
+          <label className="block text-slate-500 dark:text-slate-400 mb-1 font-semibold">Search Topic / Keyword</label>
           <div className="relative">
             <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
             <input
@@ -108,17 +108,17 @@ export const History = () => {
               placeholder="e.g. Replication, Ch 3..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-8 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:border-blue-500"
+              className="w-full pl-8 pr-3 py-2 bg-slate-50 dark:bg-[#161f30] border border-slate-200 dark:border-slate-800 rounded-xl text-slate-800 dark:text-slate-200 focus:outline-none focus:border-blue-500"
             />
           </div>
         </div>
 
         <div>
-          <label className="block text-slate-500 mb-1 font-semibold">Filter by Chapter</label>
+          <label className="block text-slate-500 dark:text-slate-400 mb-1 font-semibold">Filter by Chapter</label>
           <select
             value={chapterFilter}
             onChange={(e) => setChapterFilter(e.target.value)}
-            className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:border-blue-500"
+            className="w-full px-3 py-2 bg-slate-50 dark:bg-[#161f30] border border-slate-200 dark:border-slate-800 rounded-xl text-slate-800 dark:text-slate-200 focus:outline-none focus:border-blue-500"
           >
             <option value="">All Chapters</option>
             {(chaptersData || []).map((ch) => (
@@ -130,11 +130,11 @@ export const History = () => {
         </div>
 
         <div>
-          <label className="block text-slate-500 mb-1 font-semibold">Session Kind</label>
+          <label className="block text-slate-500 dark:text-slate-400 mb-1 font-semibold">Session Kind</label>
           <select
             value={kindFilter}
             onChange={(e) => setKindFilter(e.target.value)}
-            className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:border-blue-500"
+            className="w-full px-3 py-2 bg-slate-50 dark:bg-[#161f30] border border-slate-200 dark:border-slate-800 rounded-xl text-slate-800 dark:text-slate-200 focus:outline-none focus:border-blue-500"
           >
             <option value="">All (Practice & Mocks)</option>
             <option value="practice">Morning Practice only</option>
@@ -143,12 +143,12 @@ export const History = () => {
         </div>
 
         <div>
-          <label className="block text-slate-500 mb-1 font-semibold">From Date</label>
+          <label className="block text-slate-500 dark:text-slate-400 mb-1 font-semibold">From Date</label>
           <input
             type="date"
             value={dateFilter}
             onChange={(e) => setDateFilter(e.target.value)}
-            className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:border-blue-500"
+            className="w-full px-3 py-2 bg-slate-50 dark:bg-[#161f30] border border-slate-200 dark:border-slate-800 rounded-xl text-slate-800 dark:text-slate-200 focus:outline-none focus:border-blue-500"
           />
         </div>
       </div>
@@ -157,10 +157,10 @@ export const History = () => {
       {isLoading ? (
         <div className="text-center py-12 text-slate-400">Loading history records...</div>
       ) : filteredSessions.length === 0 ? (
-        <div className="text-center py-16 bg-white rounded-2xl border border-slate-200 text-slate-400 shadow-xs">
-          <Calendar className="w-10 h-10 mx-auto text-slate-300 mb-3" />
-          <p className="font-semibold text-slate-700">No sessions match your filters</p>
-          <p className="text-xs text-slate-500 mt-1">Try resetting the filters or log questions on the Data Log page.</p>
+        <div className="text-center py-16 bg-white dark:bg-[#111827] rounded-2xl border border-slate-200 dark:border-slate-800 text-slate-400 shadow-xs">
+          <Calendar className="w-10 h-10 mx-auto text-slate-300 dark:text-slate-600 mb-3" />
+          <p className="font-semibold text-slate-700 dark:text-slate-300">No sessions match your filters</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Try resetting the filters or log questions on the Data Log page.</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -174,7 +174,7 @@ export const History = () => {
             return (
               <div
                 key={session._id}
-                className="bg-white border border-slate-200 rounded-xl overflow-hidden transition-all shadow-xs hover:border-slate-300"
+                className="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden transition-all shadow-xs hover:border-slate-300 dark:hover:border-slate-700"
               >
                 <div
                   onClick={() => setExpandedSessionId(isExpanded ? null : session._id)}
@@ -184,8 +184,8 @@ export const History = () => {
                     <div
                       className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs ${
                         isMock
-                          ? 'bg-indigo-50 text-indigo-700 border border-indigo-200'
-                          : 'bg-blue-50 text-blue-700 border border-blue-200'
+                          ? 'bg-indigo-50 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800'
+                          : 'bg-blue-50 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800'
                       }`}
                     >
                       {isMock ? 'MOCK' : 'PRAC'}
@@ -193,15 +193,15 @@ export const History = () => {
 
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="font-mono text-xs text-slate-500">{session.date}</span>
-                        <span className="text-xs text-slate-300">•</span>
-                        <span className="font-semibold text-sm text-slate-900">
+                        <span className="font-mono text-xs text-slate-500 dark:text-slate-400">{session.date}</span>
+                        <span className="text-xs text-slate-300 dark:text-slate-700">•</span>
+                        <span className="font-semibold text-sm text-slate-900 dark:text-white">
                           {session.chapterId?.isPartA
                             ? session.chapterId?.name
                             : `Ch ${session.chapterId?.no}: ${session.chapterId?.name}`}
                         </span>
                       </div>
-                      <p className="text-xs text-slate-500">
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
                         {session.entries.length} topics • {totalQs} questions solved
                         {session.timeTakenMin ? ` • ${session.timeTakenMin} mins` : ''}
                       </p>
@@ -213,10 +213,10 @@ export const History = () => {
                       <span
                         className={`text-sm font-bold font-mono ${
                           accuracy >= 75
-                            ? 'text-emerald-600'
+                            ? 'text-emerald-600 dark:text-emerald-400'
                             : accuracy >= 50
-                            ? 'text-amber-600'
-                            : 'text-red-600'
+                            ? 'text-amber-600 dark:text-amber-400'
+                            : 'text-red-600 dark:text-red-400'
                         }`}
                       >
                         {accuracy}%
@@ -231,7 +231,7 @@ export const History = () => {
                           deleteMutation.mutate(session._id);
                         }
                       }}
-                      className="p-1.5 text-slate-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-colors"
+                      className="p-1.5 text-slate-400 hover:text-red-600 dark:hover:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
                       title="Delete Session"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -246,11 +246,11 @@ export const History = () => {
                 </div>
 
                 {isExpanded && (
-                  <div className="border-t border-slate-100 bg-slate-50 p-4 space-y-3 text-xs">
+                  <div className="border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-[#161f30] p-4 space-y-3 text-xs">
                     <div className="overflow-x-auto">
                       <table className="w-full text-left text-xs">
                         <thead>
-                          <tr className="text-slate-500 border-b border-slate-200 text-[10px] font-bold uppercase">
+                          <tr className="text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 text-[10px] font-bold uppercase">
                             <th className="py-1 px-2">Topic</th>
                             <th className="py-1 px-2 text-center">Total</th>
                             <th className="py-1 px-2 text-center">Right</th>
@@ -259,28 +259,28 @@ export const History = () => {
                             <th className="py-1 px-2">Mistakes / Tags</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-200/60">
+                        <tbody className="divide-y divide-slate-200/60 dark:divide-slate-700/60">
                           {session.entries.map((e, idx) => {
                             const eAcc = e.total > 0 ? Math.round((e.right / e.total) * 100) : 0;
                             return (
                               <tr key={idx}>
                                 <td className="py-2 px-2">
-                                  <span className="font-mono text-blue-600 font-bold mr-1.5">
+                                  <span className="font-mono text-blue-600 dark:text-blue-400 font-bold mr-1.5">
                                     {e.topicCode}
                                   </span>
-                                  <span className="text-slate-800 font-medium">{e.topicName}</span>
+                                  <span className="text-slate-800 dark:text-slate-200 font-medium">{e.topicName}</span>
                                 </td>
-                                <td className="py-2 px-2 text-center font-mono font-medium">{e.total}</td>
-                                <td className="py-2 px-2 text-center font-mono text-emerald-600 font-bold">{e.right}</td>
-                                <td className="py-2 px-2 text-center font-mono text-red-600 font-bold">{e.wrong}</td>
-                                <td className="py-2 px-2 text-center font-mono font-bold">{eAcc}%</td>
+                                <td className="py-2 px-2 text-center font-mono font-medium text-slate-800 dark:text-slate-200">{e.total}</td>
+                                <td className="py-2 px-2 text-center font-mono text-emerald-600 dark:text-emerald-400 font-bold">{e.right}</td>
+                                <td className="py-2 px-2 text-center font-mono text-red-600 dark:text-red-400 font-bold">{e.wrong}</td>
+                                <td className="py-2 px-2 text-center font-mono font-bold text-slate-800 dark:text-slate-200">{eAcc}%</td>
                                 <td className="py-2 px-2">
                                   {(e.mistakeTags || []).length > 0 ? (
                                     <div className="flex flex-wrap gap-1">
                                       {e.mistakeTags.map((t) => (
                                         <span
                                           key={t}
-                                          className="text-[10px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-200 font-semibold"
+                                          className="text-[10px] px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800 font-semibold"
                                         >
                                           {t}
                                         </span>
@@ -298,8 +298,8 @@ export const History = () => {
                     </div>
 
                     {session.notes && (
-                      <div className="p-3 bg-white rounded-xl border border-slate-200 text-slate-700">
-                        <span className="font-semibold text-slate-500 block mb-1">Notes:</span>
+                      <div className="p-3 bg-white dark:bg-[#111827] rounded-xl border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300">
+                        <span className="font-semibold text-slate-500 dark:text-slate-400 block mb-1">Notes:</span>
                         <p>{session.notes}</p>
                       </div>
                     )}
