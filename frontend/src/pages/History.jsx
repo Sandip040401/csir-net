@@ -2,13 +2,10 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Calendar,
-  Filter,
   Download,
   Trash2,
-  Clock,
   ChevronDown,
   ChevronUp,
-  FileText,
   Search,
 } from 'lucide-react';
 import api from '../api/client';
@@ -22,7 +19,6 @@ export const History = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedSessionId, setExpandedSessionId] = useState(null);
 
-  // Fetch chapters for filter dropdown
   const { data: chaptersData } = useQuery({
     queryKey: ['chapters'],
     queryFn: async () => {
@@ -31,7 +27,6 @@ export const History = () => {
     },
   });
 
-  // Fetch sessions with filters
   const { data: sessionsData, isLoading } = useQuery({
     queryKey: ['sessions', dateFilter, kindFilter, chapterFilter],
     queryFn: async () => {
@@ -46,7 +41,6 @@ export const History = () => {
 
   const sessions = sessionsData || [];
 
-  // Delete session mutation
   const deleteMutation = useMutation({
     mutationFn: async (id) => {
       await api.delete(`/sessions/${id}`);
@@ -57,7 +51,6 @@ export const History = () => {
     },
   });
 
-  // Export CSV
   const handleExportCSV = async () => {
     try {
       const response = await api.get('/export?format=csv', { responseType: 'blob' });
@@ -73,7 +66,6 @@ export const History = () => {
     }
   };
 
-  // Filtered list by topic search
   const filteredSessions = sessions.filter((s) => {
     if (!searchQuery) return true;
     const q = searchQuery.toLowerCase();
@@ -87,47 +79,46 @@ export const History = () => {
   });
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      {/* Header & Export */}
+    <div className="space-y-6 animate-fade-in text-slate-800">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight text-white">Session History</h2>
-          <p className="text-xs text-gray-400">
+          <h2 className="text-2xl font-bold tracking-tight text-slate-900">Session History</h2>
+          <p className="text-xs text-slate-500">
             View, audit, search, and export past data logs across all days
           </p>
         </div>
 
         <button
           onClick={handleExportCSV}
-          className="px-4 py-2 bg-[#161f30] hover:bg-[#1f293d] border border-[#1f293d] rounded-xl text-xs font-semibold text-gray-200 flex items-center gap-2 self-start sm:self-auto transition-colors"
+          className="px-4 py-2 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 flex items-center gap-2 self-start sm:self-auto transition-colors shadow-xs"
         >
-          <Download className="w-4 h-4 text-blue-400" />
+          <Download className="w-4 h-4 text-blue-600" />
           <span>Export All to CSV</span>
         </button>
       </div>
 
       {/* Filter Toolbar */}
-      <div className="bg-[#161f30] border border-[#1f293d] rounded-2xl p-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+      <div className="bg-white border border-slate-200 rounded-2xl p-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs shadow-xs">
         <div>
-          <label className="block text-gray-400 mb-1 font-medium">Search Topic / Keyword</label>
+          <label className="block text-slate-500 mb-1 font-semibold">Search Topic / Keyword</label>
           <div className="relative">
-            <Search className="w-3.5 h-3.5 text-gray-500 absolute left-3 top-2.5" />
+            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
             <input
               type="text"
               placeholder="e.g. Replication, Ch 3..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-8 pr-3 py-2 bg-[#0b0f19] border border-[#1f293d] rounded-xl text-white focus:outline-none focus:border-blue-500"
+              className="w-full pl-8 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:border-blue-500"
             />
           </div>
         </div>
 
         <div>
-          <label className="block text-gray-400 mb-1 font-medium">Filter by Chapter</label>
+          <label className="block text-slate-500 mb-1 font-semibold">Filter by Chapter</label>
           <select
             value={chapterFilter}
             onChange={(e) => setChapterFilter(e.target.value)}
-            className="w-full px-3 py-2 bg-[#0b0f19] border border-[#1f293d] rounded-xl text-white focus:outline-none focus:border-blue-500"
+            className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:border-blue-500"
           >
             <option value="">All Chapters</option>
             {(chaptersData || []).map((ch) => (
@@ -139,11 +130,11 @@ export const History = () => {
         </div>
 
         <div>
-          <label className="block text-gray-400 mb-1 font-medium">Session Kind</label>
+          <label className="block text-slate-500 mb-1 font-semibold">Session Kind</label>
           <select
             value={kindFilter}
             onChange={(e) => setKindFilter(e.target.value)}
-            className="w-full px-3 py-2 bg-[#0b0f19] border border-[#1f293d] rounded-xl text-white focus:outline-none focus:border-blue-500"
+            className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:border-blue-500"
           >
             <option value="">All (Practice & Mocks)</option>
             <option value="practice">Morning Practice only</option>
@@ -152,24 +143,24 @@ export const History = () => {
         </div>
 
         <div>
-          <label className="block text-gray-400 mb-1 font-medium">From Date</label>
+          <label className="block text-slate-500 mb-1 font-semibold">From Date</label>
           <input
             type="date"
             value={dateFilter}
             onChange={(e) => setDateFilter(e.target.value)}
-            className="w-full px-3 py-2 bg-[#0b0f19] border border-[#1f293d] rounded-xl text-white focus:outline-none focus:border-blue-500"
+            className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:border-blue-500"
           />
         </div>
       </div>
 
-      {/* Sessions Calendar-style List */}
+      {/* Sessions List */}
       {isLoading ? (
-        <div className="text-center py-12 text-gray-400">Loading history records...</div>
+        <div className="text-center py-12 text-slate-400">Loading history records...</div>
       ) : filteredSessions.length === 0 ? (
-        <div className="text-center py-16 bg-[#161f30] rounded-2xl border border-[#1f293d] text-gray-400">
-          <Calendar className="w-10 h-10 mx-auto text-gray-600 mb-3" />
-          <p className="font-semibold text-gray-300">No sessions match your filters</p>
-          <p className="text-xs text-gray-500 mt-1">Try resetting the filters or log questions on the Data Log page.</p>
+        <div className="text-center py-16 bg-white rounded-2xl border border-slate-200 text-slate-400 shadow-xs">
+          <Calendar className="w-10 h-10 mx-auto text-slate-300 mb-3" />
+          <p className="font-semibold text-slate-700">No sessions match your filters</p>
+          <p className="text-xs text-slate-500 mt-1">Try resetting the filters or log questions on the Data Log page.</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -183,9 +174,8 @@ export const History = () => {
             return (
               <div
                 key={session._id}
-                className="bg-[#161f30] border border-[#1f293d] rounded-xl overflow-hidden transition-all shadow-md hover:border-gray-700"
+                className="bg-white border border-slate-200 rounded-xl overflow-hidden transition-all shadow-xs hover:border-slate-300"
               >
-                {/* Header Row */}
                 <div
                   onClick={() => setExpandedSessionId(isExpanded ? null : session._id)}
                   className="p-4 flex flex-wrap items-center justify-between gap-3 cursor-pointer select-none"
@@ -194,8 +184,8 @@ export const History = () => {
                     <div
                       className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs ${
                         isMock
-                          ? 'bg-indigo-600/20 text-indigo-400 border border-indigo-500/30'
-                          : 'bg-blue-600/20 text-blue-400 border border-blue-500/30'
+                          ? 'bg-indigo-50 text-indigo-700 border border-indigo-200'
+                          : 'bg-blue-50 text-blue-700 border border-blue-200'
                       }`}
                     >
                       {isMock ? 'MOCK' : 'PRAC'}
@@ -203,15 +193,15 @@ export const History = () => {
 
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="font-mono text-xs text-gray-400">{session.date}</span>
-                        <span className="text-xs text-gray-500">•</span>
-                        <span className="font-semibold text-sm text-white">
+                        <span className="font-mono text-xs text-slate-500">{session.date}</span>
+                        <span className="text-xs text-slate-300">•</span>
+                        <span className="font-semibold text-sm text-slate-900">
                           {session.chapterId?.isPartA
                             ? session.chapterId?.name
                             : `Ch ${session.chapterId?.no}: ${session.chapterId?.name}`}
                         </span>
                       </div>
-                      <p className="text-xs text-gray-400">
+                      <p className="text-xs text-slate-500">
                         {session.entries.length} topics • {totalQs} questions solved
                         {session.timeTakenMin ? ` • ${session.timeTakenMin} mins` : ''}
                       </p>
@@ -223,46 +213,44 @@ export const History = () => {
                       <span
                         className={`text-sm font-bold font-mono ${
                           accuracy >= 75
-                            ? 'text-emerald-400'
+                            ? 'text-emerald-600'
                             : accuracy >= 50
-                            ? 'text-amber-400'
-                            : 'text-red-400'
+                            ? 'text-amber-600'
+                            : 'text-red-600'
                         }`}
                       >
                         {accuracy}%
                       </span>
-                      <p className="text-[10px] text-gray-400">Accuracy</p>
+                      <p className="text-[10px] text-slate-400">Accuracy</p>
                     </div>
 
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        if (window.confirm('Are you sure you want to delete this session?')) {
+                        if (window.confirm('Delete this session?')) {
                           deleteMutation.mutate(session._id);
                         }
                       }}
-                      className="p-1.5 text-gray-500 hover:text-red-400 rounded-lg hover:bg-red-500/10 transition-colors"
+                      className="p-1.5 text-slate-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-colors"
                       title="Delete Session"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
 
                     {isExpanded ? (
-                      <ChevronUp className="w-4 h-4 text-gray-400" />
+                      <ChevronUp className="w-4 h-4 text-slate-400" />
                     ) : (
-                      <ChevronDown className="w-4 h-4 text-gray-400" />
+                      <ChevronDown className="w-4 h-4 text-slate-400" />
                     )}
                   </div>
                 </div>
 
-                {/* Expanded Details */}
                 {isExpanded && (
-                  <div className="border-t border-[#1f293d] bg-[#0b0f19]/60 p-4 space-y-3 text-xs">
-                    {/* Topics table */}
+                  <div className="border-t border-slate-100 bg-slate-50 p-4 space-y-3 text-xs">
                     <div className="overflow-x-auto">
                       <table className="w-full text-left text-xs">
                         <thead>
-                          <tr className="text-gray-400 border-b border-[#1f293d] text-[10px] uppercase">
+                          <tr className="text-slate-500 border-b border-slate-200 text-[10px] font-bold uppercase">
                             <th className="py-1 px-2">Topic</th>
                             <th className="py-1 px-2 text-center">Total</th>
                             <th className="py-1 px-2 text-center">Right</th>
@@ -271,35 +259,35 @@ export const History = () => {
                             <th className="py-1 px-2">Mistakes / Tags</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-800">
+                        <tbody className="divide-y divide-slate-200/60">
                           {session.entries.map((e, idx) => {
                             const eAcc = e.total > 0 ? Math.round((e.right / e.total) * 100) : 0;
                             return (
                               <tr key={idx}>
                                 <td className="py-2 px-2">
-                                  <span className="font-mono text-blue-400 font-semibold mr-1.5">
+                                  <span className="font-mono text-blue-600 font-bold mr-1.5">
                                     {e.topicCode}
                                   </span>
-                                  <span className="text-gray-200">{e.topicName}</span>
+                                  <span className="text-slate-800 font-medium">{e.topicName}</span>
                                 </td>
-                                <td className="py-2 px-2 text-center font-mono">{e.total}</td>
-                                <td className="py-2 px-2 text-center font-mono text-emerald-400">{e.right}</td>
-                                <td className="py-2 px-2 text-center font-mono text-red-400">{e.wrong}</td>
-                                <td className="py-2 px-2 text-center font-mono font-semibold">{eAcc}%</td>
+                                <td className="py-2 px-2 text-center font-mono font-medium">{e.total}</td>
+                                <td className="py-2 px-2 text-center font-mono text-emerald-600 font-bold">{e.right}</td>
+                                <td className="py-2 px-2 text-center font-mono text-red-600 font-bold">{e.wrong}</td>
+                                <td className="py-2 px-2 text-center font-mono font-bold">{eAcc}%</td>
                                 <td className="py-2 px-2">
                                   {(e.mistakeTags || []).length > 0 ? (
                                     <div className="flex flex-wrap gap-1">
                                       {e.mistakeTags.map((t) => (
                                         <span
                                           key={t}
-                                          className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/20"
+                                          className="text-[10px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-200 font-semibold"
                                         >
                                           {t}
                                         </span>
                                       ))}
                                     </div>
                                   ) : (
-                                    <span className="text-gray-600">—</span>
+                                    <span className="text-slate-400">—</span>
                                   )}
                                 </td>
                               </tr>
@@ -310,8 +298,8 @@ export const History = () => {
                     </div>
 
                     {session.notes && (
-                      <div className="p-3 bg-[#111827] rounded-xl border border-[#1f293d] text-gray-300">
-                        <span className="font-semibold text-gray-400 block mb-1">Notes:</span>
+                      <div className="p-3 bg-white rounded-xl border border-slate-200 text-slate-700">
+                        <span className="font-semibold text-slate-500 block mb-1">Notes:</span>
                         <p>{session.notes}</p>
                       </div>
                     )}
