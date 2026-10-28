@@ -171,8 +171,11 @@ export const DataLog = () => {
   };
 
   useEffect(() => {
-    if (chapterBlocks.length > 0) {
+    const hasAnyEntries = chapterBlocks.some((b) => b.entries && b.entries.length > 0);
+    if (hasAnyEntries) {
       localStorage.setItem(`draft_${selectedDate}_${slot}`, JSON.stringify(chapterBlocks));
+    } else {
+      localStorage.removeItem(`draft_${selectedDate}_${slot}`);
     }
   }, [chapterBlocks, selectedDate, slot]);
 
