@@ -2,13 +2,13 @@
 
 @layer base {
   :root {
-    --bg-primary: #0b0f19;
-    --bg-secondary: #111827;
-    --bg-card: #161f30;
-    --border-color: #1f293d;
-    --text-primary: #f3f4f6;
-    --text-secondary: #9ca3af;
-    --accent: #3b82f6;
+    --bg-primary: #f8fafc;
+    --bg-secondary: #ffffff;
+    --bg-card: #ffffff;
+    --border-color: #e2e8f0;
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --accent: #2563eb;
   }
 
   body {
@@ -20,20 +20,20 @@
     min-height: 100vh;
   }
 
-  /* Custom scrollbars */
+  /* Custom light scrollbars */
   ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
   }
   ::-webkit-scrollbar-track {
-    background: #0b0f19;
+    background: #f1f5f9;
   }
   ::-webkit-scrollbar-thumb {
-    background: #243048;
+    background: #cbd5e1;
     border-radius: 9999px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: #3b82f6;
+    background: #94a3b8;
   }
 }
 
@@ -47,10 +47,9 @@
   animation: fadeIn 0.18s ease-out forwards;
 }
 
-/* Glassmorphism helpers */
 .glass-panel {
-  background: rgba(22, 31, 48, 0.75);
+  background: rgba(255, 255, 255, 0.9);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(226, 232, 240, 0.8);
 }

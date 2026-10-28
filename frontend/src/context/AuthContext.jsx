@@ -4,17 +4,27 @@ import api from '../api/client';
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState({
+    name: 'CSIR Aspirant',
+    email: 'aspirant@csirnet.local',
+    examDate: '2026-12-19',
+    dailyTarget: 100,
+    settings: {
+      weakThreshold: 50,
+      needsWorkThreshold: 65,
+      goodThreshold: 80,
+    },
+  });
+  const [loading, setLoading] = useState(false);
 
   const fetchUser = async () => {
     try {
       const res = await api.get('/auth/me');
-      setUser(res.data.user);
+      if (res.data?.user) {
+        setUser(res.data.user);
+      }
     } catch (err) {
-      setUser(null);
-    } finally {
-      setLoading(false);
+      // In no-auth mode, default user is always available
     }
   };
 
@@ -22,27 +32,12 @@ export const AuthProvider = ({ children }) => {
     fetchUser();
   }, []);
 
-  const login = async (email, password) => {
-    const res = await api.post('/auth/login', { email, password });
-    setUser(res.data.user);
-    return res.data;
-  };
-
-  const logout = async () => {
-    try {
-      await api.post('/auth/logout');
-    } finally {
-      setUser(null);
-      window.location.href = '/login';
-    }
-  };
-
   const updateUser = (updated) => {
     setUser((prev) => ({ ...prev, ...updated }));
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, updateUser, refreshUser: fetchUser }}>
+    <AuthContext.Provider value={{ user, loading, updateUser, refreshUser: fetchUser }}>
       {children}
     </AuthContext.Provider>
   );

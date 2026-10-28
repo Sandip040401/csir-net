@@ -1,13 +1,11 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   ChevronLeft,
   ChevronRight,
   Plus,
   Trash2,
   Save,
-  RotateCcw,
   Sparkles,
-  Info,
   Clock,
   Tag,
   Check,
@@ -25,14 +23,12 @@ export const DataLog = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  // 1. Date, Slot, and Chapter states
   const [selectedDate, setSelectedDate] = useState(() => {
     return new Date().toISOString().split('T')[0];
   });
   const [slot, setSlot] = useState(() => localStorage.getItem('last_slot') || 'morning');
   const [kind, setKind] = useState(() => (slot === 'night' ? 'mock' : 'practice'));
 
-  // Active chapters blocks on this day
   const [chapterBlocks, setChapterBlocks] = useState([
     {
       id: 'block-1',
@@ -47,8 +43,7 @@ export const DataLog = () => {
   const [lastSavedSnapshot, setLastSavedSnapshot] = useState(null);
   const [daySummary, setDaySummary] = useState(null);
 
-  // Fetch Chapters list
-  const { data: chaptersData, isLoading: loadingChapters } = useQuery({
+  const { data: chaptersData } = useQuery({
     queryKey: ['chapters'],
     queryFn: async () => {
       const res = await api.get('/chapters');
@@ -58,7 +53,6 @@ export const DataLog = () => {
 
   const chapters = chaptersData || [];
 
-  // Fetch All Topics for chips/autocomplete
   const { data: allTopicsData } = useQuery({
     queryKey: ['all-topics'],
     queryFn: async () => {
@@ -68,7 +62,6 @@ export const DataLog = () => {
   });
   const allTopics = allTopicsData || [];
 
-  // Fetch existing sessions for the selected day
   const { data: daySessionsData, refetch: refetchDaySessions } = useQuery({
     queryKey: ['sessions-by-date', selectedDate],
     queryFn: async () => {
@@ -78,7 +71,6 @@ export const DataLog = () => {
     enabled: Boolean(selectedDate),
   });
 
-  // When daySessionsData updates, populate or load into editor
   useEffect(() => {
     if (daySessionsData && daySessionsData.length > 0) {
       const matching = daySessionsData.filter((s) => s.slot === slot);
@@ -102,7 +94,6 @@ export const DataLog = () => {
             bRight: e.bRight ?? '',
             skipped: e.skipped || 0,
             mistakeTags: e.mistakeTags || [],
-            showMore: Boolean(e.skipped || e.bRight !== null || (e.mistakeTags && e.mistakeTags.length > 0)),
           })),
         }));
         setChapterBlocks(blocks);
@@ -110,7 +101,6 @@ export const DataLog = () => {
       }
     }
 
-    // If no existing session in this slot, check localStorage draft
     const draft = localStorage.getItem(`draft_${selectedDate}_${slot}`);
     if (draft) {
       try {
@@ -119,7 +109,6 @@ export const DataLog = () => {
       } catch (e) {}
     }
 
-    // Default to last chosen chapter or Ch 1
     const lastChId = localStorage.getItem('last_chapterId') || (chapters[1]?._id || '');
     setChapterBlocks([
       {
@@ -132,41 +121,34 @@ export const DataLog = () => {
     ]);
   }, [daySessionsData, selectedDate, slot, chapters]);
 
-  // Handle slot toggle
   const handleSlotChange = (newSlot) => {
     setSlot(newSlot);
     setKind(newSlot === 'night' ? 'mock' : 'practice');
     localStorage.setItem('last_slot', newSlot);
   };
 
-  // Day navigation arrows
   const shiftDay = (days) => {
     const d = new Date(selectedDate);
     d.setDate(d.getDate() + days);
     setSelectedDate(d.toISOString().split('T')[0]);
   };
 
-  // Autosave to localStorage on block changes
   useEffect(() => {
     if (chapterBlocks.length > 0) {
       localStorage.setItem(`draft_${selectedDate}_${slot}`, JSON.stringify(chapterBlocks));
     }
   }, [chapterBlocks, selectedDate, slot]);
 
-  // Update a specific chapter block
   const updateBlock = (blockId, updates) => {
     setChapterBlocks((prev) =>
       prev.map((b) => (b.id === blockId ? { ...b, ...updates } : b))
     );
   };
 
-  // Save session mutation
   const saveMutation = useMutation({
     mutationFn: async () => {
-      // Snapshot for Undo
       setLastSavedSnapshot(JSON.parse(JSON.stringify(chapterBlocks)));
 
-      // Save each block that has valid chapter and at least 1 entry
       let savedCount = 0;
       let totalQs = 0;
       let totalRight = 0;
@@ -210,7 +192,6 @@ export const DataLog = () => {
         savedCount++;
       }
 
-      // Find weakest topic today
       let weakestToday = null;
       let maxWrong = 0;
       for (const [tName, wrongs] of Object.entries(topicMistakeMap)) {
@@ -227,7 +208,6 @@ export const DataLog = () => {
         weakestTopic: weakestToday,
       });
 
-      // Clear draft for this slot
       localStorage.removeItem(`draft_${selectedDate}_${slot}`);
       return savedCount;
     },
@@ -255,7 +235,6 @@ export const DataLog = () => {
     }
   };
 
-  // Keyboard shortcut Ctrl+Enter to save
   useEffect(() => {
     const handleKeyDown = (e) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
@@ -267,9 +246,7 @@ export const DataLog = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [chapterBlocks, selectedDate, slot, kind]);
 
-  // Add another chapter block
   const addChapterBlock = () => {
-    const nextNo = chapterBlocks.length + 1;
     setChapterBlocks((prev) => [
       ...prev,
       {
@@ -282,17 +259,14 @@ export const DataLog = () => {
     ]);
   };
 
-  // Remove chapter block
   const removeChapterBlock = (blockId) => {
     if (chapterBlocks.length === 1) {
-      // Just clear entries
       updateBlock(blockId, { entries: [] });
       return;
     }
     setChapterBlocks((prev) => prev.filter((b) => b.id !== blockId));
   };
 
-  // Calculate day totals
   const dayTotals = chapterBlocks.reduce(
     (acc, b) => {
       b.entries.forEach((e) => {
@@ -312,28 +286,28 @@ export const DataLog = () => {
   const progressPct = Math.min(100, Math.round((dayTotals.total / dailyTarget) * 100));
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6 animate-fade-in text-slate-800">
       {/* Toast Notification */}
       {toastMessage && (
         <div
-          className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-xl shadow-2xl border text-sm flex items-center gap-3 transition-all ${
+          className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-xl shadow-xl border text-sm flex items-center gap-3 transition-all ${
             toastMessage.type === 'error'
-              ? 'bg-red-900/90 text-red-200 border-red-700'
+              ? 'bg-red-50 text-red-800 border-red-200'
               : toastMessage.type === 'info'
-              ? 'bg-indigo-900/90 text-indigo-200 border-indigo-700'
-              : 'bg-emerald-900/90 text-emerald-200 border-emerald-700'
+              ? 'bg-blue-50 text-blue-800 border-blue-200'
+              : 'bg-emerald-50 text-emerald-800 border-emerald-200'
           }`}
         >
           {toastMessage.type === 'error' ? (
-            <AlertTriangle className="w-5 h-5" />
+            <AlertTriangle className="w-5 h-5 text-red-600" />
           ) : (
-            <Check className="w-5 h-5" />
+            <Check className="w-5 h-5 text-emerald-600" />
           )}
           <span>{toastMessage.msg}</span>
           {lastSavedSnapshot && (
             <button
               onClick={handleUndo}
-              className="ml-2 px-2 py-0.5 rounded bg-white/20 hover:bg-white/30 text-xs font-semibold uppercase tracking-wider"
+              className="ml-2 px-2 py-0.5 rounded bg-white border border-slate-300 text-xs font-semibold uppercase tracking-wider text-slate-700 hover:bg-slate-50"
             >
               Undo
             </button>
@@ -342,13 +316,13 @@ export const DataLog = () => {
       )}
 
       {/* Top Controls Bar */}
-      <div className="bg-[#161f30] border border-[#1f293d] rounded-2xl p-4 shadow-lg flex flex-col md:flex-row items-center justify-between gap-4">
+      <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
         {/* Date Navigator */}
         <div className="flex items-center gap-2 w-full md:w-auto justify-between">
           <button
             onClick={() => shiftDay(-1)}
             title="Previous Day"
-            className="p-2 rounded-xl bg-[#0b0f19] border border-[#1f293d] text-gray-300 hover:text-white hover:border-blue-500 transition-colors"
+            className="p-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-600 hover:text-slate-900 hover:border-blue-400 transition-colors"
           >
             <ChevronLeft className="w-5 h-5" />
           </button>
@@ -357,34 +331,34 @@ export const DataLog = () => {
             type="date"
             value={selectedDate}
             onChange={(e) => setSelectedDate(e.target.value)}
-            className="bg-[#0b0f19] border border-[#1f293d] rounded-xl px-3 py-2 text-sm text-white font-medium focus:outline-none focus:border-blue-500"
+            className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800 font-medium focus:outline-none focus:border-blue-500"
           />
 
           <button
             onClick={() => shiftDay(1)}
             title="Next Day"
-            className="p-2 rounded-xl bg-[#0b0f19] border border-[#1f293d] text-gray-300 hover:text-white hover:border-blue-500 transition-colors"
+            className="p-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-600 hover:text-slate-900 hover:border-blue-400 transition-colors"
           >
             <ChevronRight className="w-5 h-5" />
           </button>
 
           <button
             onClick={() => setSelectedDate(new Date().toISOString().split('T')[0])}
-            className="text-xs text-blue-400 hover:underline px-2"
+            className="text-xs font-semibold text-blue-600 hover:underline px-2"
           >
             Today
           </button>
         </div>
 
         {/* Segmented Slot Toggle [Morning Practice | Night Mock] */}
-        <div className="flex items-center bg-[#0b0f19] p-1 rounded-xl border border-[#1f293d] w-full md:w-auto">
+        <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 w-full md:w-auto">
           <button
             type="button"
             onClick={() => handleSlotChange('morning')}
-            className={`flex-1 md:flex-none px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
+            className={`flex-1 md:flex-none px-4 py-2 rounded-lg text-xs font-bold transition-all ${
               slot === 'morning'
-                ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30'
-                : 'text-gray-400 hover:text-gray-200'
+                ? 'bg-white text-blue-600 shadow-sm border border-slate-200'
+                : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             ☀️ Morning Practice
@@ -392,10 +366,10 @@ export const DataLog = () => {
           <button
             type="button"
             onClick={() => handleSlotChange('night')}
-            className={`flex-1 md:flex-none px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
+            className={`flex-1 md:flex-none px-4 py-2 rounded-lg text-xs font-bold transition-all ${
               slot === 'night'
-                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
-                : 'text-gray-400 hover:text-gray-200'
+                ? 'bg-white text-indigo-600 shadow-sm border border-slate-200'
+                : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             🌙 Night Mock
@@ -405,10 +379,10 @@ export const DataLog = () => {
         {/* Save button & Target Progress */}
         <div className="flex items-center gap-3 w-full md:w-auto justify-end">
           <div className="hidden sm:flex flex-col items-end text-xs">
-            <span className="text-gray-400">
-              Daily Target: <strong className="text-white">{dayTotals.total}</strong>/{dailyTarget}
+            <span className="text-slate-500">
+              Daily Target: <strong className="text-slate-900">{dayTotals.total}</strong>/{dailyTarget}
             </span>
-            <div className="w-24 bg-gray-800 rounded-full h-1.5 mt-1 overflow-hidden">
+            <div className="w-24 bg-slate-200 rounded-full h-1.5 mt-1 overflow-hidden">
               <div
                 className="bg-emerald-500 h-1.5 rounded-full"
                 style={{ width: `${progressPct}%` }}
@@ -420,7 +394,7 @@ export const DataLog = () => {
             type="button"
             onClick={() => saveMutation.mutate()}
             disabled={saveMutation.isPending}
-            className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-semibold text-sm shadow-lg shadow-blue-600/25 flex items-center justify-center gap-2 transition-all active:scale-95"
+            className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold text-sm shadow-md shadow-blue-500/20 flex items-center justify-center gap-2 transition-all active:scale-95"
           >
             <Save className="w-4 h-4" />
             <span>{saveMutation.isPending ? 'Saving...' : 'Save (Ctrl+Enter)'}</span>
@@ -428,18 +402,18 @@ export const DataLog = () => {
         </div>
       </div>
 
-      {/* Quick Day Summary Card (Shown when questions logged today) */}
+      {/* Quick Day Summary Card */}
       {(daySummary || dayTotals.total > 0) && (
-        <div className="bg-gradient-to-r from-blue-900/30 via-indigo-900/20 to-[#161f30] border border-blue-500/20 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4">
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4 shadow-sm">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center shadow-sm">
               <Sparkles className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-xs text-gray-400">Today's Performance</p>
-              <p className="text-sm font-semibold text-white">
+              <p className="text-xs text-slate-500 font-medium">Today's Performance</p>
+              <p className="text-sm font-bold text-slate-900">
                 {dayTotals.total} Questions Solved •{' '}
-                <span className={dayAccuracy >= 70 ? 'text-emerald-400' : 'text-amber-400'}>
+                <span className={dayAccuracy >= 70 ? 'text-emerald-600' : 'text-amber-600'}>
                   {dayAccuracy}% Accuracy
                 </span>
               </p>
@@ -447,10 +421,10 @@ export const DataLog = () => {
           </div>
 
           {daySummary?.weakestTopic && (
-            <div className="text-xs bg-red-500/10 border border-red-500/20 px-3 py-1.5 rounded-xl text-red-300 flex items-center gap-1.5">
-              <AlertTriangle className="w-4 h-4 text-red-400 shrink-0" />
+            <div className="text-xs bg-red-50 border border-red-200 px-3 py-1.5 rounded-xl text-red-700 flex items-center gap-1.5 font-medium">
+              <AlertTriangle className="w-4 h-4 text-red-500 shrink-0" />
               <span>
-                Weakest topic today: <strong className="text-white">{daySummary.weakestTopic}</strong>
+                Weakest topic today: <strong className="text-red-900">{daySummary.weakestTopic}</strong>
               </span>
             </div>
           )}
@@ -479,9 +453,9 @@ export const DataLog = () => {
         <button
           type="button"
           onClick={addChapterBlock}
-          className="px-4 py-2.5 rounded-xl border border-dashed border-[#1f293d] hover:border-blue-500 text-gray-300 hover:text-white bg-[#111827]/50 text-sm font-medium flex items-center gap-2 transition-all"
+          className="px-4 py-2.5 rounded-xl border border-dashed border-slate-300 hover:border-blue-500 text-slate-600 hover:text-blue-600 bg-white shadow-sm text-sm font-medium flex items-center gap-2 transition-all"
         >
-          <Plus className="w-4 h-4 text-blue-400" />
+          <Plus className="w-4 h-4 text-blue-600" />
           <span>+ Add another chapter for this session</span>
         </button>
       </div>
@@ -489,7 +463,6 @@ export const DataLog = () => {
   );
 };
 
-// Subcomponent: Individual Chapter Block with Topic Grid
 const ChapterEntryBlock = ({
   blockIndex,
   block,
@@ -503,20 +476,16 @@ const ChapterEntryBlock = ({
   const currentChapter = chapters.find((c) => c._id === block.chapterId);
   const isPartA = currentChapter?.isPartA;
 
-  // Filter topics belonging to this chapter
   const chapterTopics = allTopics.filter(
     (t) => t.chapterId === block.chapterId || t.chapterId?._id === block.chapterId
   );
 
-  // Set selected chapter
   const handleChapterSelect = (cid) => {
     onUpdateBlock({ chapterId: cid, entries: [] });
     localStorage.setItem('last_chapterId', cid);
   };
 
-  // Add a topic row
   const addTopicRow = (topic) => {
-    // Avoid duplicate rows
     if (block.entries.some((e) => e.topicId === topic._id)) return;
 
     const newEntry = {
@@ -532,13 +501,11 @@ const ChapterEntryBlock = ({
       bRight: '',
       skipped: 0,
       mistakeTags: [],
-      showMore: false,
     };
 
     onUpdateBlock({ entries: [...block.entries, newEntry] });
   };
 
-  // Add all topics for this chapter
   const handleAddAll = () => {
     const existingIds = new Set(block.entries.map((e) => e.topicId));
     const toAdd = chapterTopics
@@ -556,13 +523,11 @@ const ChapterEntryBlock = ({
         bRight: '',
         skipped: 0,
         mistakeTags: [],
-        showMore: false,
       }));
 
     onUpdateBlock({ entries: [...block.entries, ...toAdd] });
   };
 
-  // Same topics as last time for this chapter
   const handleLoadLastTopics = async () => {
     if (!block.chapterId) return;
     try {
@@ -571,8 +536,8 @@ const ChapterEntryBlock = ({
       if (recent && recent.length > 0) {
         const rows = recent.map((t) => ({
           topicId: t.topicId,
-          topicCode: t.code,
-          topicName: t.name,
+          code: t.code,
+          name: t.name,
           description: t.description || '',
           total: 20,
           right: 14,
@@ -582,14 +547,12 @@ const ChapterEntryBlock = ({
           bRight: '',
           skipped: 0,
           mistakeTags: [],
-          showMore: false,
         }));
         onUpdateBlock({ entries: rows });
       }
     } catch (e) {}
   };
 
-  // Update entry cell
   const updateEntryCell = (index, field, value) => {
     const updated = [...block.entries];
     const row = { ...updated[index] };
@@ -597,16 +560,13 @@ const ChapterEntryBlock = ({
 
     row[field] = numVal;
 
-    // Auto-fill rules
     if (field === 'total') {
       const tot = numVal === '' ? 0 : numVal;
-      // Recalculate wrong = total - right
       const r = typeof row.right === 'number' ? row.right : 0;
       if (r > tot) row.right = tot;
       row.wrong = Math.max(0, tot - (row.right || 0) - (row.skipped || 0));
 
       if (!isPartA) {
-        // Auto-split into B & C
         const b = Math.min(row.bTotal || 0, tot);
         row.bTotal = b;
         row.cTotal = Math.max(0, tot - b);
@@ -633,7 +593,6 @@ const ChapterEntryBlock = ({
     onUpdateBlock({ entries: updated });
   };
 
-  // Stepper increment/decrement
   const stepValue = (index, field, delta) => {
     const row = block.entries[index];
     const cur = typeof row[field] === 'number' ? row[field] : 0;
@@ -641,13 +600,11 @@ const ChapterEntryBlock = ({
     updateEntryCell(index, field, nextVal);
   };
 
-  // Remove row
   const removeRow = (index) => {
     const updated = block.entries.filter((_, i) => i !== index);
     onUpdateBlock({ entries: updated });
   };
 
-  // Toggle mistake tag
   const toggleMistakeTag = (index, tag) => {
     const updated = [...block.entries];
     const row = { ...updated[index] };
@@ -663,19 +620,18 @@ const ChapterEntryBlock = ({
   };
 
   return (
-    <div className="bg-[#161f30] border border-[#1f293d] rounded-2xl p-4 md:p-6 shadow-xl space-y-4">
+    <div className="bg-white border border-slate-200 rounded-2xl p-4 md:p-6 shadow-sm space-y-4">
       {/* Chapter header bar */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-[#1f293d]">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
         <div className="flex-1 flex flex-col sm:flex-row sm:items-center gap-3 w-full">
-          {/* Chapter Selector Dropdown */}
           <div className="w-full sm:w-80">
-            <label className="block text-[11px] font-semibold uppercase tracking-wider text-gray-400 mb-1">
+            <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
               Select Chapter
             </label>
             <select
               value={block.chapterId}
               onChange={(e) => handleChapterSelect(e.target.value)}
-              className="w-full px-3 py-2 bg-[#0b0f19] border border-[#1f293d] rounded-xl text-sm text-white focus:outline-none focus:border-blue-500"
+              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 font-medium focus:outline-none focus:border-blue-500"
             >
               <option value="">-- Choose Chapter --</option>
               {chapters.map((ch) => (
@@ -686,11 +642,10 @@ const ChapterEntryBlock = ({
             </select>
           </div>
 
-          {/* Night Mock Fields: Time Taken */}
           {slot === 'night' && (
             <div className="w-32">
-              <label className="block text-[11px] font-semibold uppercase tracking-wider text-gray-400 mb-1 flex items-center gap-1">
-                <Clock className="w-3 h-3 text-indigo-400" /> Time (min)
+              <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1 flex items-center gap-1">
+                <Clock className="w-3 h-3 text-indigo-500" /> Time (min)
               </label>
               <input
                 type="number"
@@ -699,7 +654,7 @@ const ChapterEntryBlock = ({
                 placeholder="e.g. 45"
                 value={block.timeTakenMin}
                 onChange={(e) => onUpdateBlock({ timeTakenMin: e.target.value })}
-                className="w-full px-3 py-2 bg-[#0b0f19] border border-[#1f293d] rounded-xl text-sm text-white focus:outline-none focus:border-indigo-500"
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:border-indigo-500"
               />
             </div>
           )}
@@ -709,39 +664,38 @@ const ChapterEntryBlock = ({
           type="button"
           onClick={onRemoveBlock}
           title="Remove Chapter Block"
-          className="text-xs text-gray-400 hover:text-red-400 p-2 rounded-lg hover:bg-red-500/10 transition-colors self-end sm:self-center"
+          className="text-xs text-slate-400 hover:text-red-500 p-2 rounded-lg hover:bg-red-50 transition-colors self-end sm:self-center"
         >
           <Trash2 className="w-4 h-4" />
         </button>
       </div>
 
-      {/* Topic selection chips (Frictionless entry) */}
+      {/* Topic selection chips */}
       {block.chapterId && (
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-gray-300">
+            <span className="text-xs font-bold text-slate-700">
               Select topics attempted in this session:
             </span>
             <div className="flex gap-2">
               <button
                 type="button"
                 onClick={handleAddAll}
-                className="text-[11px] font-medium text-blue-400 hover:text-blue-300 transition-colors"
+                className="text-[11px] font-semibold text-blue-600 hover:text-blue-800 transition-colors"
               >
                 + Add all topics
               </button>
-              <span className="text-gray-600">•</span>
+              <span className="text-slate-300">•</span>
               <button
                 type="button"
                 onClick={handleLoadLastTopics}
-                className="text-[11px] font-medium text-indigo-400 hover:text-indigo-300 transition-colors"
+                className="text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 transition-colors"
               >
                 ↻ Same as last time
               </button>
             </div>
           </div>
 
-          {/* Chips list */}
           <div className="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto pr-1">
             {chapterTopics.map((topic) => {
               const isSelected = block.entries.some((e) => e.topicId === topic._id);
@@ -754,11 +708,11 @@ const ChapterEntryBlock = ({
                   disabled={isSelected}
                   className={`text-xs px-2.5 py-1 rounded-lg border transition-all text-left flex items-center gap-1.5 ${
                     isSelected
-                      ? 'bg-blue-600/20 text-blue-300 border-blue-500/40 opacity-60 cursor-default'
-                      : 'bg-[#0b0f19] text-gray-300 border-[#1f293d] hover:border-blue-500 hover:text-white'
+                      ? 'bg-blue-50 text-blue-700 border-blue-200 opacity-60 cursor-default'
+                      : 'bg-slate-50 text-slate-700 border-slate-200 hover:border-blue-400 hover:bg-white'
                   }`}
                 >
-                  <span className="font-mono text-[10px] text-gray-400 font-bold">
+                  <span className="font-mono text-[10px] text-blue-600 font-bold">
                     {topic.code}
                   </span>
                   <span className="truncate max-w-[200px]">{topic.name}</span>
@@ -771,9 +725,9 @@ const ChapterEntryBlock = ({
 
       {/* Entry Grid */}
       {block.entries.length > 0 && (
-        <div className="overflow-x-auto rounded-xl border border-[#1f293d]">
-          <table className="w-full text-left text-xs text-gray-300">
-            <thead className="bg-[#0b0f19] text-gray-400 uppercase tracking-wider text-[10px] border-b border-[#1f293d]">
+        <div className="overflow-x-auto rounded-xl border border-slate-200">
+          <table className="w-full text-left text-xs text-slate-700">
+            <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider text-[10px] font-bold border-b border-slate-200">
               <tr>
                 <th className="py-2.5 px-3 min-w-[200px]">Topic</th>
                 <th className="py-2.5 px-2 w-24 text-center">Total</th>
@@ -789,35 +743,32 @@ const ChapterEntryBlock = ({
                 <th className="py-2.5 px-2 text-center w-10"></th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#1f293d]/50 bg-[#111827]">
+            <tbody className="divide-y divide-slate-100 bg-white">
               {block.entries.map((entry, idx) => {
                 const tot = Number(entry.total || 0);
                 const r = Number(entry.right || 0);
                 const w = Number(entry.wrong || 0);
                 const acc = tot > 0 ? Math.round((r / tot) * 100) : 0;
-                const isInvalid = r + w > tot;
 
                 return (
                   <React.Fragment key={entry.topicId || idx}>
-                    <tr className={`hover:bg-[#161f30]/60 ${isInvalid ? 'bg-red-950/20' : ''}`}>
-                      {/* Topic Name & tooltip */}
+                    <tr className="hover:bg-slate-50/70">
                       <td className="py-2 px-3">
                         <div className="flex items-center gap-2">
-                          <span className="font-mono font-bold text-blue-400 text-[11px]">
+                          <span className="font-mono font-bold text-blue-600 text-[11px]">
                             {entry.topicCode}
                           </span>
-                          <span className="font-medium text-white truncate max-w-[220px]">
+                          <span className="font-semibold text-slate-900 truncate max-w-[220px]">
                             {entry.topicName}
                           </span>
                           {entry.description && (
-                            <span title={entry.description} className="text-gray-500 cursor-help">
+                            <span title={entry.description} className="text-slate-400 cursor-help">
                               <HelpCircle className="w-3.5 h-3.5" />
                             </span>
                           )}
                         </div>
                       </td>
 
-                      {/* Total with Stepper */}
                       <td className="py-1 px-1 text-center">
                         <StepperInput
                           value={entry.total}
@@ -826,27 +777,24 @@ const ChapterEntryBlock = ({
                         />
                       </td>
 
-                      {/* Right with Stepper */}
                       <td className="py-1 px-1 text-center">
                         <StepperInput
                           value={entry.right}
-                          className="text-emerald-400 font-semibold"
+                          className="text-emerald-600 font-bold"
                           onChange={(v) => updateEntryCell(idx, 'right', v)}
                           onStep={(d) => stepValue(idx, 'right', d)}
                         />
                       </td>
 
-                      {/* Wrong with Stepper */}
                       <td className="py-1 px-1 text-center">
                         <StepperInput
                           value={entry.wrong}
-                          className="text-red-400 font-semibold"
+                          className="text-red-600 font-bold"
                           onChange={(v) => updateEntryCell(idx, 'wrong', v)}
                           onStep={(d) => stepValue(idx, 'wrong', d)}
                         />
                       </td>
 
-                      {/* Part B & Part C (Hidden for Part A) */}
                       {!isPartA && (
                         <>
                           <td className="py-1 px-1 text-center">
@@ -866,38 +814,35 @@ const ChapterEntryBlock = ({
                         </>
                       )}
 
-                      {/* Live Row Accuracy % */}
-                      <td className="py-1 px-2 text-center font-mono font-semibold">
+                      <td className="py-1 px-2 text-center font-mono font-bold">
                         <span
                           className={
                             acc >= 75
-                              ? 'text-emerald-400'
+                              ? 'text-emerald-600'
                               : acc >= 50
-                              ? 'text-amber-400'
-                              : 'text-red-400'
+                              ? 'text-amber-600'
+                              : 'text-red-600'
                           }
                         >
                           {acc}%
                         </span>
                       </td>
 
-                      {/* Remove Row Button */}
                       <td className="py-1 px-2 text-center">
                         <button
                           type="button"
                           onClick={() => removeRow(idx)}
-                          className="text-gray-500 hover:text-red-400 p-1"
+                          className="text-slate-400 hover:text-red-500 p-1"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </td>
                     </tr>
 
-                    {/* Sub-row: Mistake tags / More details */}
                     <tr>
-                      <td colSpan={isPartA ? 6 : 8} className="px-3 py-1.5 bg-[#0b0f19]/40 border-b border-[#1f293d]/30">
+                      <td colSpan={isPartA ? 6 : 8} className="px-3 py-1.5 bg-slate-50 border-b border-slate-100">
                         <div className="flex flex-wrap items-center gap-2 text-[11px]">
-                          <span className="text-gray-500 flex items-center gap-1">
+                          <span className="text-slate-500 font-medium flex items-center gap-1">
                             <Tag className="w-3 h-3" /> Error tags:
                           </span>
                           {MISTAKE_OPTIONS.map((tag) => {
@@ -909,8 +854,8 @@ const ChapterEntryBlock = ({
                                 onClick={() => toggleMistakeTag(idx, tag)}
                                 className={`px-2 py-0.5 rounded-full border text-[10px] transition-colors ${
                                   isTagged
-                                    ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 font-semibold'
-                                    : 'bg-[#111827] text-gray-400 border-gray-700 hover:text-gray-200'
+                                    ? 'bg-amber-100 text-amber-800 border-amber-300 font-bold'
+                                    : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'
                                 }`}
                               >
                                 {tag}
@@ -918,15 +863,14 @@ const ChapterEntryBlock = ({
                             );
                           })}
 
-                          {/* Skipped Qs */}
-                          <div className="ml-auto flex items-center gap-1.5 text-gray-400">
+                          <div className="ml-auto flex items-center gap-1.5 text-slate-500">
                             <span>Skipped:</span>
                             <input
                               type="number"
                               inputMode="numeric"
                               value={entry.skipped || 0}
                               onChange={(e) => updateEntryCell(idx, 'skipped', e.target.value)}
-                              className="w-10 px-1 py-0.5 bg-[#111827] border border-[#1f293d] rounded text-center text-xs text-white"
+                              className="w-10 px-1 py-0.5 bg-white border border-slate-200 rounded text-center text-xs text-slate-800"
                             />
                           </div>
                         </div>
@@ -936,17 +880,16 @@ const ChapterEntryBlock = ({
                 );
               })}
             </tbody>
-            {/* Totals Row */}
-            <tfoot className="bg-[#0b0f19] font-bold text-white text-xs border-t border-[#1f293d]">
+            <tfoot className="bg-slate-50 font-bold text-slate-900 text-xs border-t border-slate-200">
               <tr>
                 <td className="py-2.5 px-3">Total / Chapter Summary</td>
                 <td className="py-2.5 px-2 text-center">
                   {block.entries.reduce((s, e) => s + Number(e.total || 0), 0)}
                 </td>
-                <td className="py-2.5 px-2 text-center text-emerald-400">
+                <td className="py-2.5 px-2 text-center text-emerald-600">
                   {block.entries.reduce((s, e) => s + Number(e.right || 0), 0)}
                 </td>
-                <td className="py-2.5 px-2 text-center text-red-400">
+                <td className="py-2.5 px-2 text-center text-red-600">
                   {block.entries.reduce((s, e) => s + Number(e.wrong || 0), 0)}
                 </td>
                 {!isPartA && (
@@ -959,7 +902,7 @@ const ChapterEntryBlock = ({
                     </td>
                   </>
                 )}
-                <td className="py-2.5 px-2 text-center text-blue-400">
+                <td className="py-2.5 px-2 text-center text-blue-600">
                   {(() => {
                     const tot = block.entries.reduce((s, e) => s + Number(e.total || 0), 0);
                     const r = block.entries.reduce((s, e) => s + Number(e.right || 0), 0);
@@ -975,30 +918,29 @@ const ChapterEntryBlock = ({
 
       {/* Session Notes */}
       <div>
-        <label className="block text-[11px] font-semibold uppercase tracking-wider text-gray-400 mb-1 flex items-center gap-1.5">
+        <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1 flex items-center gap-1.5">
           <FileText className="w-3.5 h-3.5" /> Notes / Key Observations
         </label>
         <textarea
           rows={2}
           value={block.notes}
           onChange={(e) => onUpdateBlock({ notes: e.target.value })}
-          placeholder="e.g. Formula confusion in Michaelis-Menten Lineweaver-Burk plot; reviewed Lodish Fig 3.2..."
-          className="w-full px-3 py-2 bg-[#0b0f19] border border-[#1f293d] rounded-xl text-xs text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+          placeholder="e.g. Formula confusion in Michaelis-Menten plot; reviewed Lodish Fig 3.2..."
+          className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-500"
         />
       </div>
     </div>
   );
 };
 
-// Subcomponent: Stepper Input with Mobile-First numeric keypad
 const StepperInput = ({ value, onChange, onStep, className = '' }) => {
   return (
-    <div className="inline-flex items-center rounded-lg border border-[#1f293d] bg-[#0b0f19] overflow-hidden">
+    <div className="inline-flex items-center rounded-lg border border-slate-200 bg-white overflow-hidden shadow-xs">
       <button
         type="button"
         tabIndex={-1}
         onClick={() => onStep(-1)}
-        className="px-1.5 py-1 text-gray-400 hover:text-white hover:bg-white/10 active:bg-white/20 transition-colors"
+        className="px-1.5 py-1 text-slate-500 hover:text-slate-800 hover:bg-slate-100 active:bg-slate-200 transition-colors font-bold"
       >
         -
       </button>
@@ -1008,13 +950,13 @@ const StepperInput = ({ value, onChange, onStep, className = '' }) => {
         min="0"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className={`w-11 text-center bg-transparent py-1 text-xs focus:outline-none focus:bg-blue-600/10 ${className}`}
+        className={`w-11 text-center bg-transparent py-1 text-xs focus:outline-none focus:bg-blue-50 font-medium ${className}`}
       />
       <button
         type="button"
         tabIndex={-1}
         onClick={() => onStep(1)}
-        className="px-1.5 py-1 text-gray-400 hover:text-white hover:bg-white/10 active:bg-white/20 transition-colors"
+        className="px-1.5 py-1 text-slate-500 hover:text-slate-800 hover:bg-slate-100 active:bg-slate-200 transition-colors font-bold"
       >
         +
       </button>
