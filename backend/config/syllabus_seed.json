@@ -1,0 +1,996 @@
+{
+  "version": 1,
+  "exam": "CSIR-UGC NET Life Sciences & Biotechnology (703)",
+  "chapters": [
+    {
+      "no": 0,
+      "code": "A",
+      "name": "Part A – Reasoning & Maths",
+      "isPartA": true,
+      "weight": 3,
+      "order": 0,
+      "topics": [
+        {
+          "code": "A1",
+          "name": "Logical Reasoning",
+          "description": "Syllogisms, statements & conclusions, deductions, blood relations, directions, coding-decoding",
+          "order": 1
+        },
+        {
+          "code": "A2",
+          "name": "Series & Patterns",
+          "description": "Number, letter and figure series, series formation",
+          "order": 2
+        },
+        {
+          "code": "A3",
+          "name": "Analogy & Classification",
+          "description": "Analogies, odd-one-out, classification",
+          "order": 3
+        },
+        {
+          "code": "A4",
+          "name": "Puzzles & Arrangements",
+          "description": "Seating, ordering, scheduling, grouping puzzles",
+          "order": 4
+        },
+        {
+          "code": "A5",
+          "name": "Graphical Analysis & Data Interpretation",
+          "description": "Tables, bar/line/pie charts, graphs",
+          "order": 5
+        },
+        {
+          "code": "A6",
+          "name": "Number System & Arithmetic",
+          "description": "Fractions, HCF/LCM, divisibility, indices, surds",
+          "order": 6
+        },
+        {
+          "code": "A7",
+          "name": "Ratio, Percentage, Profit-Loss & Interest",
+          "description": "Ratio and proportion, percentages, profit and loss, simple/compound interest, mixtures",
+          "order": 7
+        },
+        {
+          "code": "A8",
+          "name": "Time, Speed, Distance & Work",
+          "description": "Time-work, pipes, speed-distance, relative motion",
+          "order": 8
+        },
+        {
+          "code": "A9",
+          "name": "Permutation, Combination & Probability",
+          "description": "Counting principles, arrangements, selections, probability",
+          "order": 9
+        },
+        {
+          "code": "A10",
+          "name": "Algebra, Geometry & Mensuration",
+          "description": "Equations, inequalities, areas, volumes, basic geometry",
+          "order": 10
+        },
+        {
+          "code": "A11",
+          "name": "Quantitative Comparison & Estimation",
+          "description": "Comparing quantities, approximation, analytical and numerical ability",
+          "order": 11
+        },
+        {
+          "code": "A12",
+          "name": "Part A Mixed / PYQ Set",
+          "description": "Mixed previous-year style sets",
+          "order": 12
+        }
+      ]
+    },
+    {
+      "no": 1,
+      "code": "1",
+      "name": "Structure and Function of Biomolecules",
+      "isPartA": false,
+      "weight": 3,
+      "order": 1,
+      "topics": [
+        {
+          "code": "1A",
+          "name": "Structure of atoms, molecules & chemical bonds",
+          "description": "Atomic structure, molecular structure, covalent and non-covalent bonds",
+          "order": 1
+        },
+        {
+          "code": "1B1",
+          "name": "Carbohydrates: composition, structure & function",
+          "description": "Mono-, di-, oligo- and polysaccharides, glycoconjugates",
+          "order": 2
+        },
+        {
+          "code": "1B2",
+          "name": "Lipids: composition, structure & function",
+          "description": "Fatty acids, triglycerides, phospholipids, steroids, membrane lipids",
+          "order": 3
+        },
+        {
+          "code": "1B3",
+          "name": "Proteins & amino acids: composition, structure & function",
+          "description": "Amino acids, peptide bond, protein classes",
+          "order": 4
+        },
+        {
+          "code": "1B4",
+          "name": "Nucleic acids: composition, structure & function",
+          "description": "Nucleotides, DNA and RNA chemistry",
+          "order": 5
+        },
+        {
+          "code": "1B5",
+          "name": "Vitamins: structure & function",
+          "description": "Water- and fat-soluble vitamins, coenzyme roles",
+          "order": 6
+        },
+        {
+          "code": "1C",
+          "name": "Stabilizing interactions",
+          "description": "van der Waals, electrostatic, hydrogen bonding, hydrophobic interactions",
+          "order": 7
+        },
+        {
+          "code": "1D",
+          "name": "Principles of biophysical chemistry",
+          "description": "pH, buffers, reaction kinetics, thermodynamics, colligative properties",
+          "order": 8
+        },
+        {
+          "code": "1E",
+          "name": "Bioenergetics & energy transduction",
+          "description": "Glycolysis, oxidative phosphorylation, coupled reactions, group transfer, biological energy transducers",
+          "order": 9
+        },
+        {
+          "code": "1F1",
+          "name": "Enzyme catalysis & kinetics",
+          "description": "Principles of catalysis, Michaelis-Menten, inhibition",
+          "order": 10
+        },
+        {
+          "code": "1F2",
+          "name": "Enzyme regulation, mechanisms & isozymes",
+          "description": "Allostery, covalent modification, mechanism of catalysis, isozymes",
+          "order": 11
+        },
+        {
+          "code": "1G",
+          "name": "Conformation of proteins",
+          "description": "Ramachandran plot, secondary structure, domains, motifs, folds",
+          "order": 12
+        },
+        {
+          "code": "1H",
+          "name": "Conformation of nucleic acids",
+          "description": "A, B and Z DNA, RNA conformation",
+          "order": 13
+        },
+        {
+          "code": "1I",
+          "name": "Stability of proteins & nucleic acids",
+          "description": "Folding, denaturation, melting, stability factors",
+          "order": 14
+        },
+        {
+          "code": "1J1",
+          "name": "Carbohydrate metabolism",
+          "description": "Glycolysis, TCA, gluconeogenesis, glycogen, PPP",
+          "order": 15
+        },
+        {
+          "code": "1J2",
+          "name": "Lipid metabolism",
+          "description": "Beta-oxidation, fatty acid and cholesterol biosynthesis, ketone bodies",
+          "order": 16
+        },
+        {
+          "code": "1J3",
+          "name": "Amino acid metabolism",
+          "description": "Transamination, urea cycle, amino acid synthesis and degradation",
+          "order": 17
+        },
+        {
+          "code": "1J4",
+          "name": "Nucleotide metabolism",
+          "description": "Purine and pyrimidine synthesis, salvage and degradation",
+          "order": 18
+        },
+        {
+          "code": "1J5",
+          "name": "Vitamin & cofactor metabolism",
+          "description": "Metabolic roles and deficiency",
+          "order": 19
+        }
+      ]
+    },
+    {
+      "no": 2,
+      "code": "2",
+      "name": "Cellular Organization",
+      "isPartA": false,
+      "weight": 3,
+      "order": 2,
+      "topics": [
+        {
+          "code": "2A1",
+          "name": "Cell wall & cell membrane structure",
+          "description": "Cell wall, model membranes, lipid bilayer, membrane proteins in prokaryotes and eukaryotes",
+          "order": 1
+        },
+        {
+          "code": "2A2",
+          "name": "Membrane transport & electrical properties",
+          "description": "Diffusion, osmosis, ion channels, active transport, pumps, sorting and intracellular transport, electrical properties",
+          "order": 2
+        },
+        {
+          "code": "2B1",
+          "name": "Nucleus, mitochondria & plastids",
+          "description": "Nuclear organization and dynamics, mitochondria, chloroplast, plastids",
+          "order": 3
+        },
+        {
+          "code": "2B2",
+          "name": "ER, Golgi, lysosomes, peroxisomes & vacuoles",
+          "description": "Endomembrane system organization and function",
+          "order": 4
+        },
+        {
+          "code": "2B3",
+          "name": "Cytoskeleton & motility",
+          "description": "Microtubules, actin, intermediate filaments, motors",
+          "order": 5
+        },
+        {
+          "code": "2C",
+          "name": "Organization of genes & chromosomes",
+          "description": "Operon, unique/repetitive DNA, interrupted genes, gene families, chromatin, heterochromatin, euchromatin, transposons",
+          "order": 6
+        },
+        {
+          "code": "2D1",
+          "name": "Mitosis, meiosis & cell cycle regulation",
+          "description": "Cell cycle steps, checkpoints, CDKs, regulation",
+          "order": 7
+        },
+        {
+          "code": "2D2",
+          "name": "Apoptosis, necrosis & autophagy",
+          "description": "Cell death pathways",
+          "order": 8
+        },
+        {
+          "code": "2E",
+          "name": "Microbial physiology",
+          "description": "Growth kinetics, cell division strategies, stress response, antimicrobial resistance (AMR)",
+          "order": 9
+        }
+      ]
+    },
+    {
+      "no": 3,
+      "code": "3",
+      "name": "Fundamental Processes",
+      "isPartA": false,
+      "weight": 3,
+      "order": 3,
+      "topics": [
+        {
+          "code": "3A",
+          "name": "DNA replication, repair & recombination",
+          "description": "Replication origin/fork, enzymes, fidelity, extrachromosomal replicons, DNA damage and repair, homologous and site-specific recombination",
+          "order": 1
+        },
+        {
+          "code": "3B1",
+          "name": "Transcription & its regulation",
+          "description": "RNA polymerases, transcription factors, activators/repressors, inhibitors",
+          "order": 2
+        },
+        {
+          "code": "3B2",
+          "name": "RNA processing, RNA types & non-coding RNA",
+          "description": "Capping, splicing, polyadenylation, editing, RNA transport, ribozymes, riboswitches, ncRNA",
+          "order": 3
+        },
+        {
+          "code": "3C1",
+          "name": "Translation & its regulation",
+          "description": "Ribosome, mechanism of translation, translational inhibitors",
+          "order": 4
+        },
+        {
+          "code": "3C2",
+          "name": "Post-translational modification, trafficking & degradation",
+          "description": "PTMs, protein trafficking and transport, proteasome/degradation",
+          "order": 5
+        },
+        {
+          "code": "3D1",
+          "name": "Gene regulation in phages, viruses & prokaryotes",
+          "description": "Lac, trp, lambda and other regulatory circuits",
+          "order": 6
+        },
+        {
+          "code": "3D2",
+          "name": "Eukaryotic gene regulation, chromatin & epigenetics",
+          "description": "Chromatin in expression, gene silencing, epigenetic regulation",
+          "order": 7
+        }
+      ]
+    },
+    {
+      "no": 4,
+      "code": "4",
+      "name": "Cell Communication and Cell Signaling",
+      "isPartA": false,
+      "weight": 3,
+      "order": 4,
+      "topics": [
+        {
+          "code": "4A1",
+          "name": "Hormones, receptors & signal transduction",
+          "description": "Cell surface receptors, GPCR signalling, second messengers, regulation of pathways",
+          "order": 1
+        },
+        {
+          "code": "4A2",
+          "name": "Bacterial/plant signalling & quorum sensing",
+          "description": "Two-component systems, light signalling in plants, chemotaxis, quorum sensing",
+          "order": 2
+        },
+        {
+          "code": "4B1",
+          "name": "Cell adhesion, ECM, gap junctions & integrins",
+          "description": "General principles of cell communication, adhesion molecules",
+          "order": 3
+        },
+        {
+          "code": "4B2",
+          "name": "Neurotransmission & haematopoiesis",
+          "description": "Neurotransmission and its regulation, regulation of haematopoiesis",
+          "order": 4
+        },
+        {
+          "code": "4C1",
+          "name": "Innate immunity",
+          "description": "Cells and molecules, Toll-like receptors, complement, inflammation",
+          "order": 5
+        },
+        {
+          "code": "4C2",
+          "name": "Antigens, antibodies & antibody diversity",
+          "description": "Antigenicity, immunogenicity, epitopes, antibody structure/function, diversity generation, monoclonal antibodies, antibody engineering, antigen-antibody interactions",
+          "order": 6
+        },
+        {
+          "code": "4C3",
+          "name": "MHC, antigen presentation & lymphocyte activation",
+          "description": "MHC molecules, processing and presentation, B and T cell receptors, activation and differentiation, humoral and cell-mediated responses",
+          "order": 7
+        },
+        {
+          "code": "4C4",
+          "name": "Immune response in infection, hypersensitivity, autoimmunity & immunodeficiency",
+          "description": "Bacterial, parasitic, viral infections, hypersensitivity, autoimmunity, congenital and acquired immunodeficiencies",
+          "order": 8
+        },
+        {
+          "code": "4C5",
+          "name": "Vaccines & immune modulation",
+          "description": "Vaccine types, primary and secondary immune modulation",
+          "order": 9
+        },
+        {
+          "code": "4D",
+          "name": "Host-pathogen interaction",
+          "description": "Pathogen recognition and entry, host alteration, virus-induced transformation, diseases in plants and animals, cell-cell fusion",
+          "order": 10
+        },
+        {
+          "code": "4E",
+          "name": "Cancer",
+          "description": "Oncogenes, tumor suppressors, cell cycle and cancer, virus-induced cancer, metastasis, therapy",
+          "order": 11
+        }
+      ]
+    },
+    {
+      "no": 5,
+      "code": "5",
+      "name": "Developmental Biology",
+      "isPartA": false,
+      "weight": 3,
+      "order": 5,
+      "topics": [
+        {
+          "code": "5A",
+          "name": "Basic concepts of development",
+          "description": "Potency, commitment, specification, induction, competence, morphogen gradients, stem cells, imprinting, transgenics",
+          "order": 1
+        },
+        {
+          "code": "5B1",
+          "name": "Animal gametogenesis, fertilization & early development",
+          "description": "Gametes, sperm-egg recognition, cleavage, blastula, gastrulation, germ layers",
+          "order": 2
+        },
+        {
+          "code": "5B2",
+          "name": "Plant reproduction, embryogenesis & seed development",
+          "description": "Gametophytes, double fertilization, embryogenesis, symmetry, seed formation, germination",
+          "order": 3
+        },
+        {
+          "code": "5C1",
+          "name": "Pattern formation in model organisms",
+          "description": "Dictyostelium, Drosophila, amphibia, chick axes and patterning",
+          "order": 4
+        },
+        {
+          "code": "5C2",
+          "name": "Organogenesis, regeneration, metamorphosis & sex determination",
+          "description": "C. elegans vulva, eye lens, limb development, neurons, larval formation, environmental regulation, sex determination",
+          "order": 5
+        },
+        {
+          "code": "5D",
+          "name": "Plant morphogenesis & organogenesis",
+          "description": "Shoot/root apical meristem, leaf development, phyllotaxy, flowering transition, floral development",
+          "order": 6
+        },
+        {
+          "code": "5E",
+          "name": "Programmed cell death, aging & senescence",
+          "description": "Animals and plants",
+          "order": 7
+        }
+      ]
+    },
+    {
+      "no": 6,
+      "code": "6",
+      "name": "System Physiology – Plant",
+      "isPartA": false,
+      "weight": 3,
+      "order": 6,
+      "topics": [
+        {
+          "code": "6A",
+          "name": "Photosynthesis",
+          "description": "Light harvesting, electron transport, photoprotection, C3, C4, CAM",
+          "order": 1
+        },
+        {
+          "code": "6B",
+          "name": "Respiration & photorespiration",
+          "description": "TCA, plant mitochondrial ETC, alternate oxidase, photorespiratory pathway",
+          "order": 2
+        },
+        {
+          "code": "6C",
+          "name": "Nitrogen metabolism",
+          "description": "Nitrate/ammonium assimilation, amino acid biosynthesis, nitrogen fixation",
+          "order": 3
+        },
+        {
+          "code": "6D",
+          "name": "Plant hormones",
+          "description": "Biosynthesis, transport, physiological effects, mechanism",
+          "order": 4
+        },
+        {
+          "code": "6E",
+          "name": "Sensory photobiology",
+          "description": "Phytochromes, cryptochromes, phototropins, stomatal movement, photoperiodism, biological clock",
+          "order": 5
+        },
+        {
+          "code": "6F",
+          "name": "Solute transport & photoassimilate translocation",
+          "description": "Water/ion uptake, xylem, phloem, transpiration, loading/unloading",
+          "order": 6
+        },
+        {
+          "code": "6G",
+          "name": "Secondary metabolites",
+          "description": "Terpenes, phenolics, alkaloids, phenylpropanoids, metabolic engineering",
+          "order": 7
+        },
+        {
+          "code": "6H",
+          "name": "Stress physiology",
+          "description": "Biotic and abiotic stress responses, innate immunity",
+          "order": 8
+        }
+      ]
+    },
+    {
+      "no": 7,
+      "code": "7",
+      "name": "System Physiology – Animal",
+      "isPartA": false,
+      "weight": 3,
+      "order": 7,
+      "topics": [
+        {
+          "code": "7A",
+          "name": "Blood & circulation",
+          "description": "Blood corpuscles, haemopoiesis, plasma, blood groups, haemoglobin, haemostasis",
+          "order": 1
+        },
+        {
+          "code": "7B",
+          "name": "Cardiovascular system",
+          "description": "Heart structure, myogenic heart, ECG, cardiac cycle, blood pressure, regulation",
+          "order": 2
+        },
+        {
+          "code": "7C",
+          "name": "Respiratory system",
+          "description": "Comparative respiration, gas transport and exchange, regulation",
+          "order": 3
+        },
+        {
+          "code": "7D",
+          "name": "Nervous system",
+          "description": "Neurons, action potential, neuroanatomy, CNS/PNS, muscle tone and posture",
+          "order": 4
+        },
+        {
+          "code": "7E",
+          "name": "Sense organs",
+          "description": "Vision, hearing, tactile responses",
+          "order": 5
+        },
+        {
+          "code": "7F",
+          "name": "Excretory system",
+          "description": "Kidney, urine formation/concentration, water, electrolyte, acid-base balance",
+          "order": 6
+        },
+        {
+          "code": "7G",
+          "name": "Thermoregulation",
+          "description": "Comfort zone, physical/chemical/neural regulation, acclimatization",
+          "order": 7
+        },
+        {
+          "code": "7H",
+          "name": "Stress & adaptation",
+          "description": "Physiological stress responses",
+          "order": 8
+        },
+        {
+          "code": "7I",
+          "name": "Digestive system",
+          "description": "Digestion, absorption, energy balance, BMR",
+          "order": 9
+        },
+        {
+          "code": "7J",
+          "name": "Endocrinology & reproduction",
+          "description": "Endocrine glands, hormone action, reproductive processes, neuroendocrine regulation",
+          "order": 10
+        },
+        {
+          "code": "7K",
+          "name": "Holobionts & gut microbiome",
+          "description": "Gut microbiome, germ-free animals, gut-brain axis, dysbiosis",
+          "order": 11
+        },
+        {
+          "code": "7L",
+          "name": "Interorgan communication, energy homeostasis & metabolic disorders",
+          "description": "Metabolic health and disorders",
+          "order": 12
+        }
+      ]
+    },
+    {
+      "no": 8,
+      "code": "8",
+      "name": "Inheritance Biology",
+      "isPartA": false,
+      "weight": 3,
+      "order": 8,
+      "topics": [
+        {
+          "code": "8A",
+          "name": "Chromosomal & extrachromosomal inheritance",
+          "description": "Mendelian principles, gene interactions, linkage, sex-linkage, organelle inheritance, maternal inheritance",
+          "order": 1
+        },
+        {
+          "code": "8B",
+          "name": "Genes & mutations",
+          "description": "Alleles, complementation, mutation types, mutant classes, germinal vs somatic",
+          "order": 2
+        },
+        {
+          "code": "8C",
+          "name": "Genetic analysis",
+          "description": "Linkage maps, molecular markers, tetrad analysis, bacterial gene transfer, fine structure, mapping populations",
+          "order": 3
+        },
+        {
+          "code": "8D",
+          "name": "Human genetics",
+          "description": "Pedigree analysis, LOD score, karyotypes, genetic disorders",
+          "order": 4
+        },
+        {
+          "code": "8E",
+          "name": "Quantitative & population genetics",
+          "description": "Hardy-Weinberg, polygenic inheritance, heritability, molecular mapping",
+          "order": 5
+        },
+        {
+          "code": "8F",
+          "name": "Structural & numerical chromosomal alterations",
+          "description": "Deletion, duplication, inversion, translocation, ploidy",
+          "order": 6
+        }
+      ]
+    },
+    {
+      "no": 9,
+      "code": "9",
+      "name": "Evolution and Diversity of Life Forms",
+      "isPartA": false,
+      "weight": 3,
+      "order": 9,
+      "topics": [
+        {
+          "code": "9A1",
+          "name": "Origin of life & mechanisms of evolution",
+          "description": "Early evolution, multicellularity, natural selection, drift, gene flow, mutation",
+          "order": 1
+        },
+        {
+          "code": "9A2",
+          "name": "Speciation, extinction, adaptive radiation & human evolution",
+          "description": "Speciation, extinction events, convergent evolution, coevolution, human evolution",
+          "order": 2
+        },
+        {
+          "code": "9B",
+          "name": "Principles & methods of taxonomy",
+          "description": "Species concepts, nomenclature, classical and quantitative taxonomy",
+          "order": 3
+        },
+        {
+          "code": "9C",
+          "name": "Microbial life",
+          "description": "Bacteria, Archaea, viruses, important microbes",
+          "order": 4
+        },
+        {
+          "code": "9D",
+          "name": "Protists",
+          "description": "Algae, protozoa, slime molds, water molds",
+          "order": 5
+        },
+        {
+          "code": "9E",
+          "name": "Fungi",
+          "description": "Fungal groups, plant and human pathogens",
+          "order": 6
+        },
+        {
+          "code": "9F",
+          "name": "Plant life",
+          "description": "Bryophytes, ferns, gymnosperms, angiosperms, morphology, anatomy, reproduction",
+          "order": 7
+        },
+        {
+          "code": "9G",
+          "name": "Animal life",
+          "description": "Invertebrates and vertebrates",
+          "order": 8
+        }
+      ]
+    },
+    {
+      "no": 10,
+      "code": "10",
+      "name": "Ecology and Behavioural Biology",
+      "isPartA": false,
+      "weight": 3,
+      "order": 10,
+      "topics": [
+        {
+          "code": "10A",
+          "name": "Introduction to ecology",
+          "description": "Levels of organization, abiotic/biotic factors, adaptations",
+          "order": 1
+        },
+        {
+          "code": "10B",
+          "name": "Population ecology",
+          "description": "Growth models, life tables, life history strategies, metapopulations",
+          "order": 2
+        },
+        {
+          "code": "10C",
+          "name": "Community ecology",
+          "description": "Food webs, keystone species, species interactions, succession",
+          "order": 3
+        },
+        {
+          "code": "10D",
+          "name": "Ecosystem ecology",
+          "description": "Energy flow, biogeochemical cycles, ecosystem services",
+          "order": 4
+        },
+        {
+          "code": "10E",
+          "name": "Human impacts on ecosystems",
+          "description": "Land use change, climate change, pollution, invasive species",
+          "order": 5
+        },
+        {
+          "code": "10F",
+          "name": "Biodiversity & conservation",
+          "description": "IUCN categories, conservation genetics, PVA, in-situ/ex-situ, policies",
+          "order": 6
+        },
+        {
+          "code": "10G",
+          "name": "Acts & policies",
+          "description": "Biodiversity Act 2002, PGRFA treaty, seed gene banks, PPVFR",
+          "order": 7
+        },
+        {
+          "code": "10H",
+          "name": "Behavioural ecology",
+          "description": "Foraging, communication, migration, social behaviour, sexual selection, parental care",
+          "order": 8
+        }
+      ]
+    },
+    {
+      "no": 11,
+      "code": "11",
+      "name": "Bioinformatics and Computational Biology",
+      "isPartA": false,
+      "weight": 3,
+      "order": 11,
+      "topics": [
+        {
+          "code": "11A",
+          "name": "Major bioinformatic resources",
+          "description": "Sequence, expression, structure, pattern databases",
+          "order": 1
+        },
+        {
+          "code": "11B",
+          "name": "Sequence analysis concepts",
+          "description": "BLAST, FASTA, scoring matrices, pairwise/multiple alignment, homologs, comparative genomics",
+          "order": 2
+        },
+        {
+          "code": "11C",
+          "name": "Gene annotation",
+          "description": "Function prediction, polymorphism, deleterious mutations, phylogenetics",
+          "order": 3
+        },
+        {
+          "code": "11D",
+          "name": "Molecular modelling & dynamics",
+          "description": "3D visualization, molecular mechanics, force fields",
+          "order": 4
+        },
+        {
+          "code": "11E",
+          "name": "Protein 3D structure classification & prediction",
+          "description": "Hierarchy, homology modelling, fold recognition, threading, ab initio, AlphaFold",
+          "order": 5
+        },
+        {
+          "code": "11F",
+          "name": "Drug design",
+          "description": "Chemical databases, receptor-ligand interactions, SBDD, LBDD, QSAR, pharmacophores, ADMET",
+          "order": 6
+        },
+        {
+          "code": "11G",
+          "name": "Systems biology",
+          "description": "Data science in biology, metabolic modelling, digital health, personalized medicine",
+          "order": 7
+        }
+      ]
+    },
+    {
+      "no": 12,
+      "code": "12",
+      "name": "Biochemical Engineering and Industrial Biotechnology",
+      "isPartA": false,
+      "weight": 3,
+      "order": 12,
+      "topics": [
+        {
+          "code": "12A",
+          "name": "Introductory mathematics",
+          "description": "Calculus, ODEs, linear algebra, numerical methods",
+          "order": 1
+        },
+        {
+          "code": "12B",
+          "name": "Engineering principles",
+          "description": "Material and energy balance, transport phenomena, heat and mass transfer",
+          "order": 2
+        },
+        {
+          "code": "12C",
+          "name": "Thermodynamics in biological systems",
+          "description": "Non-equilibrium thermodynamics, entropy production, coupled reactions, glycolytic oscillations",
+          "order": 3
+        },
+        {
+          "code": "12D",
+          "name": "Bioprocess engineering & technology",
+          "description": "Growth kinetics, bioreactors, sterilization, oxygen transfer, fermentation processes",
+          "order": 4
+        },
+        {
+          "code": "12E",
+          "name": "Enzymes & microbial technology",
+          "description": "Biocatalysis, enzyme engineering, immobilization, Thiele modulus",
+          "order": 5
+        },
+        {
+          "code": "12F",
+          "name": "Downstream processing",
+          "description": "Biomass removal, precipitation, membranes, chromatography, extraction, drying",
+          "order": 6
+        },
+        {
+          "code": "12G",
+          "name": "Bioprocess plant design",
+          "description": "Process flow sheet, scale-up/down, equipment selection",
+          "order": 7
+        },
+        {
+          "code": "12H",
+          "name": "Metabolic engineering & synthetic biology",
+          "description": "",
+          "order": 8
+        }
+      ]
+    },
+    {
+      "no": 13,
+      "code": "13",
+      "name": "Advances in Biotechnology",
+      "isPartA": false,
+      "weight": 3,
+      "order": 13,
+      "topics": [
+        {
+          "code": "13A",
+          "name": "Recombinant DNA technology",
+          "description": "Cloning, expression, mutagenesis, knockouts, genome editing, sequencing methods",
+          "order": 1
+        },
+        {
+          "code": "13B1",
+          "name": "Immunological applications, vaccines & immunotherapy",
+          "description": "Vaccine types, diagnostics, adjuvants, cell therapy, antibody engineering, phage display",
+          "order": 2
+        },
+        {
+          "code": "13B2",
+          "name": "Stem cells, organoids & tissue engineering",
+          "description": "iPSCs, directed differentiation, drug screening, organoids",
+          "order": 3
+        },
+        {
+          "code": "13B3",
+          "name": "Neurobiology, medical devices & biosensors",
+          "description": "Electrophysiology, behavioural tests, implants",
+          "order": 4
+        },
+        {
+          "code": "13C",
+          "name": "Animal biotechnology",
+          "description": "Transgenic animals, breeding, germplasm conservation, cell and tissue culture",
+          "order": 5
+        },
+        {
+          "code": "13D",
+          "name": "Agriculture biotechnology",
+          "description": "Transgenic plants, molecular markers, MAS, gene pyramiding, GE crops, plant tissue culture",
+          "order": 6
+        },
+        {
+          "code": "13E",
+          "name": "Marine biotechnology",
+          "description": "Marine organisms, resources, microbial metabolites, biofilms, oceanography",
+          "order": 7
+        },
+        {
+          "code": "13F",
+          "name": "Environmental biotechnology",
+          "description": "Wastewater, bioremediation, biofuels, biofertilizers, biopesticides",
+          "order": 8
+        }
+      ]
+    },
+    {
+      "no": 14,
+      "code": "14",
+      "name": "Methods in Biology",
+      "isPartA": false,
+      "weight": 3,
+      "order": 14,
+      "topics": [
+        {
+          "code": "14A",
+          "name": "Molecular biology techniques",
+          "description": "Isolation and analysis of macromolecules, chromatography, electrophoresis, centrifugation",
+          "order": 1
+        },
+        {
+          "code": "14B",
+          "name": "Biophysical methods",
+          "description": "UV/vis, fluorescence, CD, NMR, ESR, X-ray, cryo-EM, light scattering, mass spectrometry, SPR",
+          "order": 2
+        },
+        {
+          "code": "14C",
+          "name": "Genomics, transcriptomics, proteomics & metabolomics",
+          "description": "Genome organization, expression analysis, DNA fingerprinting, barcoding, single-cell omics",
+          "order": 3
+        },
+        {
+          "code": "14D",
+          "name": "Radiolabeling techniques",
+          "description": "Radioisotopes, detection, incorporation, imaging, safety",
+          "order": 4
+        },
+        {
+          "code": "14E",
+          "name": "Histochemical & immunotechniques",
+          "description": "ELISA, RIA, western blot, IP, flow cytometry, immunofluorescence, FISH, GISH",
+          "order": 5
+        },
+        {
+          "code": "14F",
+          "name": "Microscopic techniques",
+          "description": "Light, advanced, SEM/TEM, resolving power, sample preparation",
+          "order": 6
+        },
+        {
+          "code": "14G",
+          "name": "Electrophysiological methods",
+          "description": "Single-neuron recording, patch clamp, ECG, PET, MRI, fMRI, CAT",
+          "order": 7
+        },
+        {
+          "code": "14H",
+          "name": "Methods in field biology",
+          "description": "Population estimation, remote sensing, sampling in behaviour, habitat characterization",
+          "order": 8
+        },
+        {
+          "code": "14I",
+          "name": "Statistical methods",
+          "description": "Distributions, tests, regression, ANOVA, chi-square, multivariate basics",
+          "order": 9
+        },
+        {
+          "code": "14J",
+          "name": "IPR, biosafety & bioethics",
+          "description": "IP types, patent databases, biosafety levels, ethics, publication ethics, AI in research",
+          "order": 10
+        }
+      ]
+    }
+  ]
+}

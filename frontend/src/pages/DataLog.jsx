@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   ChevronLeft,
   ChevronRight,
@@ -12,6 +12,11 @@ import {
   AlertTriangle,
   FileText,
   HelpCircle,
+  Search,
+  MoreVertical,
+  EyeOff,
+  Edit2,
+  X,
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../api/client';
@@ -43,6 +48,7 @@ export const DataLog = () => {
   const [lastSavedSnapshot, setLastSavedSnapshot] = useState(null);
   const [daySummary, setDaySummary] = useState(null);
 
+  // Fetch Chapters list (verified: Part A first, then 1-14 by order)
   const { data: chaptersData } = useQuery({
     queryKey: ['chapters'],
     queryFn: async () => {
@@ -53,7 +59,8 @@ export const DataLog = () => {
 
   const chapters = chaptersData || [];
 
-  const { data: allTopicsData } = useQuery({
+  // Fetch All Topics
+  const { data: allTopicsData, refetch: refetchAllTopics } = useQuery({
     queryKey: ['all-topics'],
     queryFn: async () => {
       const res = await api.get('/chapters/all-topics');
@@ -62,6 +69,7 @@ export const DataLog = () => {
   });
   const allTopics = allTopicsData || [];
 
+  // Fetch existing sessions for the selected day
   const { data: daySessionsData, refetch: refetchDaySessions } = useQuery({
     queryKey: ['sessions-by-date', selectedDate],
     queryFn: async () => {
@@ -86,6 +94,7 @@ export const DataLog = () => {
             topicCode: e.topicCode || e.topicId?.code || '',
             topicName: e.topicName || e.topicId?.name || '',
             description: e.topicId?.description || '',
+            isCustom: e.topicId?.isCustom || false,
             total: e.total,
             right: e.right,
             wrong: e.wrong,
@@ -109,7 +118,8 @@ export const DataLog = () => {
       } catch (e) {}
     }
 
-    const lastChId = localStorage.getItem('last_chapterId') || (chapters[1]?._id || '');
+    // Default to last chosen chapter or Ch 0 (Part A) / Ch 1
+    const lastChId = localStorage.getItem('last_chapterId') || (chapters[0]?._id || '');
     setChapterBlocks([
       {
         id: 'block-1',
@@ -444,6 +454,7 @@ export const DataLog = () => {
             kind={kind}
             onUpdateBlock={(updates) => updateBlock(block.id, updates)}
             onRemoveBlock={() => removeChapterBlock(block.id)}
+            refetchAllTopics={refetchAllTopics}
           />
         ))}
       </div>
@@ -463,6 +474,7 @@ export const DataLog = () => {
   );
 };
 
+// Subcomponent: Individual Chapter Block with Topic Grid and Searchable Inline Add
 const ChapterEntryBlock = ({
   blockIndex,
   block,
@@ -472,20 +484,39 @@ const ChapterEntryBlock = ({
   kind,
   onUpdateBlock,
   onRemoveBlock,
+  refetchAllTopics,
 }) => {
   const currentChapter = chapters.find((c) => c._id === block.chapterId);
   const isPartA = currentChapter?.isPartA;
 
-  const chapterTopics = allTopics.filter(
-    (t) => t.chapterId === block.chapterId || t.chapterId?._id === block.chapterId
-  );
+  // Search & inline custom topic states
+  const [topicSearchQuery, setTopicSearchQuery] = useState('');
+  const [isInlineAdding, setIsInlineAdding] = useState(false);
+  const [inlineTopicName, setInlineTopicName] = useState('');
+  const [activeMenuTopicId, setActiveMenuTopicId] = useState(null);
+  const [editingTopicId, setEditingTopicId] = useState(null);
+  const [editingTopicName, setEditingTopicName] = useState('');
+
+  // Chapter topics sorted by order
+  const chapterTopics = allTopics
+    .filter((t) => (t.chapterId === block.chapterId || t.chapterId?._id === block.chapterId) && !t.hidden)
+    .sort((a, b) => (a.order || 0) - (b.order || 0));
+
+  // Search filtered topics
+  const filteredTopics = chapterTopics.filter((t) => {
+    if (!topicSearchQuery) return true;
+    const q = topicSearchQuery.toLowerCase();
+    return (t.name || '').toLowerCase().includes(q) || (t.code || '').toLowerCase().includes(q);
+  });
 
   const handleChapterSelect = (cid) => {
     onUpdateBlock({ chapterId: cid, entries: [] });
     localStorage.setItem('last_chapterId', cid);
+    setTopicSearchQuery('');
+    setIsInlineAdding(false);
   };
 
-  const addTopicRow = (topic) => {
+  const addTopicRow = (topic, shouldFocus = false) => {
     if (block.entries.some((e) => e.topicId === topic._id)) return;
 
     const newEntry = {
@@ -493,6 +524,7 @@ const ChapterEntryBlock = ({
       topicCode: topic.code,
       topicName: topic.name,
       description: topic.description || '',
+      isCustom: Boolean(topic.isCustom),
       total: 20,
       right: 14,
       wrong: 6,
@@ -504,6 +536,16 @@ const ChapterEntryBlock = ({
     };
 
     onUpdateBlock({ entries: [...block.entries, newEntry] });
+
+    if (shouldFocus) {
+      setTimeout(() => {
+        const inputs = document.querySelectorAll(`input[data-total-input="${topic._id}"]`);
+        if (inputs.length > 0) {
+          inputs[0].focus();
+          inputs[0].select();
+        }
+      }, 50);
+    }
   };
 
   const handleAddAll = () => {
@@ -515,6 +557,7 @@ const ChapterEntryBlock = ({
         topicCode: topic.code,
         topicName: topic.name,
         description: topic.description || '',
+        isCustom: Boolean(topic.isCustom),
         total: 10,
         right: 7,
         wrong: 3,
@@ -536,9 +579,10 @@ const ChapterEntryBlock = ({
       if (recent && recent.length > 0) {
         const rows = recent.map((t) => ({
           topicId: t.topicId,
-          code: t.code,
-          name: t.name,
+          topicCode: t.code,
+          topicName: t.name,
           description: t.description || '',
+          isCustom: false,
           total: 20,
           right: 14,
           wrong: 6,
@@ -551,6 +595,66 @@ const ChapterEntryBlock = ({
         onUpdateBlock({ entries: rows });
       }
     } catch (e) {}
+  };
+
+  // Submit inline custom topic creation
+  const handleInlineAddTopic = async () => {
+    const nameToAdd = (inlineTopicName || topicSearchQuery).trim();
+    if (!nameToAdd || !block.chapterId) return;
+
+    try {
+      const res = await api.post(`/chapters/${block.chapterId}/topics`, { name: nameToAdd });
+      const createdTopic = res.data.data;
+
+      // Optimistic refresh
+      await refetchAllTopics();
+
+      // Immediately add row to grid and focus
+      addTopicRow(createdTopic, true);
+
+      // Reset inline form
+      setInlineTopicName('');
+      setTopicSearchQuery('');
+      setIsInlineAdding(false);
+    } catch (err) {
+      alert(err.response?.data?.error || 'Failed to add custom topic');
+    }
+  };
+
+  // Custom topic action: Rename
+  const handleRenameTopic = async (topicId) => {
+    if (!editingTopicName.trim()) return;
+    try {
+      await api.patch(`/chapters/topics/${topicId}`, { name: editingTopicName.trim() });
+      await refetchAllTopics();
+      setEditingTopicId(null);
+      setActiveMenuTopicId(null);
+    } catch (e) {
+      alert('Failed to rename topic');
+    }
+  };
+
+  // Custom topic action: Hide
+  const handleHideTopic = async (topicId) => {
+    try {
+      await api.patch(`/chapters/topics/${topicId}`, { hidden: true });
+      await refetchAllTopics();
+      setActiveMenuTopicId(null);
+    } catch (e) {
+      alert('Failed to hide topic');
+    }
+  };
+
+  // Custom topic action: Delete
+  const handleDeleteTopic = async (topicId) => {
+    if (!window.confirm('Delete or hide this custom topic? History will remain preserved.')) return;
+    try {
+      await api.delete(`/chapters/topics/${topicId}`);
+      await refetchAllTopics();
+      setActiveMenuTopicId(null);
+    } catch (e) {
+      alert('Failed to delete topic');
+    }
   };
 
   const updateEntryCell = (index, field, value) => {
@@ -670,14 +774,14 @@ const ChapterEntryBlock = ({
         </button>
       </div>
 
-      {/* Topic selection chips */}
+      {/* Immediate Full Topic List (Searchable + Inline Custom Topic Creation) */}
       {block.chapterId && (
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
+        <div className="space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <span className="text-xs font-bold text-slate-700">
-              Select topics attempted in this session:
+              Chapter Topics (Tap to add to entry grid):
             </span>
-            <div className="flex gap-2">
+            <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={handleAddAll}
@@ -696,30 +800,210 @@ const ChapterEntryBlock = ({
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto pr-1">
-            {chapterTopics.map((topic) => {
+          {/* Topic search filter input */}
+          <div className="relative">
+            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
+            <input
+              type="text"
+              placeholder="Search topic or type to add custom..."
+              value={topicSearchQuery}
+              onChange={(e) => {
+                setTopicSearchQuery(e.target.value);
+                if (!isInlineAdding && e.target.value) {
+                  setInlineTopicName(e.target.value);
+                }
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && topicSearchQuery.trim()) {
+                  e.preventDefault();
+                  if (filteredTopics.length === 1) {
+                    addTopicRow(filteredTopics[0], true);
+                    setTopicSearchQuery('');
+                  } else if (filteredTopics.length === 0) {
+                    handleInlineAddTopic();
+                  }
+                }
+              }}
+              className="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-blue-500"
+            />
+          </div>
+
+          {/* Quick single-tap Add "<typed text>" if query has no direct match */}
+          {topicSearchQuery.trim() && filteredTopics.length === 0 && (
+            <div className="p-2 bg-blue-50 border border-blue-200 rounded-xl flex items-center justify-between">
+              <span className="text-xs text-blue-900">
+                No matching topic found for "<strong>{topicSearchQuery.trim()}</strong>"
+              </span>
+              <button
+                type="button"
+                onClick={handleInlineAddTopic}
+                className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-lg shadow-xs flex items-center gap-1.5"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Add "{topicSearchQuery.trim()}"</span>
+              </button>
+            </div>
+          )}
+
+          {/* Topics Chips list (Ordered + Custom Badges + ⋯ menu) */}
+          <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto pr-1">
+            {filteredTopics.map((topic) => {
               const isSelected = block.entries.some((e) => e.topicId === topic._id);
+              const isEditing = editingTopicId === topic._id;
+              const isMenuOpen = activeMenuTopicId === topic._id;
+
               return (
-                <button
-                  key={topic._id}
-                  type="button"
-                  title={topic.description || topic.name}
-                  onClick={() => addTopicRow(topic)}
-                  disabled={isSelected}
-                  className={`text-xs px-2.5 py-1 rounded-lg border transition-all text-left flex items-center gap-1.5 ${
-                    isSelected
-                      ? 'bg-blue-50 text-blue-700 border-blue-200 opacity-60 cursor-default'
-                      : 'bg-slate-50 text-slate-700 border-slate-200 hover:border-blue-400 hover:bg-white'
-                  }`}
-                >
-                  <span className="font-mono text-[10px] text-blue-600 font-bold">
-                    {topic.code}
-                  </span>
-                  <span className="truncate max-w-[200px]">{topic.name}</span>
-                </button>
+                <div key={topic._id} className="relative inline-flex items-center">
+                  {isEditing ? (
+                    <div className="flex items-center gap-1 bg-white border border-blue-400 p-1 rounded-lg shadow-xs">
+                      <input
+                        type="text"
+                        value={editingTopicName}
+                        onChange={(e) => setEditingTopicName(e.target.value)}
+                        className="text-xs px-2 py-0.5 border border-slate-200 rounded text-slate-800"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleRenameTopic(topic._id)}
+                        className="text-emerald-600 font-bold text-xs px-1"
+                      >
+                        ✓
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setEditingTopicId(null)}
+                        className="text-slate-400 text-xs px-1"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      title={topic.description || topic.name}
+                      onClick={() => addTopicRow(topic)}
+                      disabled={isSelected}
+                      className={`text-xs px-2.5 py-1 rounded-lg border transition-all text-left flex items-center gap-1.5 ${
+                        isSelected
+                          ? 'bg-blue-50 text-blue-700 border-blue-200 opacity-60 cursor-default'
+                          : 'bg-slate-50 text-slate-700 border-slate-200 hover:border-blue-400 hover:bg-white'
+                      }`}
+                    >
+                      <span className="font-mono text-[10px] text-blue-600 font-bold">
+                        {topic.code}
+                      </span>
+                      <span className="truncate max-w-[200px]">{topic.name}</span>
+                      {topic.isCustom && (
+                        <span className="text-[9px] px-1 py-0.2 rounded font-bold uppercase bg-amber-100 text-amber-800 border border-amber-200">
+                          custom
+                        </span>
+                      )}
+                    </button>
+                  )}
+
+                  {/* ⋯ Menu for Custom or Built-in topics */}
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setActiveMenuTopicId(isMenuOpen ? null : topic._id);
+                      }}
+                      className="p-1 text-slate-400 hover:text-slate-700 rounded-md hover:bg-slate-100"
+                    >
+                      <MoreVertical className="w-3 h-3" />
+                    </button>
+
+                    {isMenuOpen && (
+                      <div className="absolute right-0 top-6 z-30 w-32 bg-white border border-slate-200 rounded-lg shadow-lg py-1 text-xs">
+                        {topic.isCustom && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditingTopicId(topic._id);
+                              setEditingTopicName(topic.name);
+                              setActiveMenuTopicId(null);
+                            }}
+                            className="w-full text-left px-3 py-1.5 hover:bg-slate-50 text-slate-700 flex items-center gap-2"
+                          >
+                            <Edit2 className="w-3 h-3 text-blue-600" />
+                            <span>Rename</span>
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => handleHideTopic(topic._id)}
+                          className="w-full text-left px-3 py-1.5 hover:bg-slate-50 text-slate-700 flex items-center gap-2"
+                        >
+                          <EyeOff className="w-3 h-3 text-amber-600" />
+                          <span>Hide topic</span>
+                        </button>
+                        {topic.isCustom && (
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteTopic(topic._id)}
+                            className="w-full text-left px-3 py-1.5 hover:bg-red-50 text-red-600 flex items-center gap-2"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                            <span>Delete</span>
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
               );
             })}
           </div>
+
+          {/* Directly under the topic list: Always show "+ Add new topic" row */}
+          {!isInlineAdding ? (
+            <button
+              type="button"
+              onClick={() => {
+                setIsInlineAdding(true);
+                setInlineTopicName(topicSearchQuery || '');
+              }}
+              className="text-xs font-semibold text-blue-600 hover:text-blue-800 flex items-center gap-1.5 py-1 px-1 transition-colors"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>+ Add new topic to this chapter</span>
+            </button>
+          ) : (
+            <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex flex-wrap items-center gap-2 animate-fade-in">
+              <span className="text-xs font-bold text-slate-700">Add custom topic:</span>
+              <input
+                type="text"
+                autoFocus
+                placeholder="Topic name (e.g. CRISPR base editing)"
+                value={inlineTopicName}
+                onChange={(e) => setInlineTopicName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleInlineAddTopic();
+                  } else if (e.key === 'Escape') {
+                    setIsInlineAdding(false);
+                  }
+                }}
+                className="flex-1 min-w-[200px] px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs text-slate-800 focus:outline-none focus:border-blue-500"
+              />
+              <button
+                type="button"
+                onClick={handleInlineAddTopic}
+                className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-lg shadow-xs"
+              >
+                Add
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsInlineAdding(false)}
+                className="p-1.5 text-slate-400 hover:text-slate-600"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          )}
         </div>
       )}
 
@@ -761,6 +1045,11 @@ const ChapterEntryBlock = ({
                           <span className="font-semibold text-slate-900 truncate max-w-[220px]">
                             {entry.topicName}
                           </span>
+                          {entry.isCustom && (
+                            <span className="text-[9px] px-1 py-0.2 rounded font-bold uppercase bg-amber-100 text-amber-800 border border-amber-200">
+                              custom
+                            </span>
+                          )}
                           {entry.description && (
                             <span title={entry.description} className="text-slate-400 cursor-help">
                               <HelpCircle className="w-3.5 h-3.5" />
@@ -771,6 +1060,7 @@ const ChapterEntryBlock = ({
 
                       <td className="py-1 px-1 text-center">
                         <StepperInput
+                          dataAttribute={entry.topicId}
                           value={entry.total}
                           onChange={(v) => updateEntryCell(idx, 'total', v)}
                           onStep={(d) => stepValue(idx, 'total', d)}
@@ -933,7 +1223,7 @@ const ChapterEntryBlock = ({
   );
 };
 
-const StepperInput = ({ value, onChange, onStep, className = '' }) => {
+const StepperInput = ({ value, onChange, onStep, className = '', dataAttribute }) => {
   return (
     <div className="inline-flex items-center rounded-lg border border-slate-200 bg-white overflow-hidden shadow-xs">
       <button
@@ -946,6 +1236,7 @@ const StepperInput = ({ value, onChange, onStep, className = '' }) => {
       </button>
       <input
         type="number"
+        data-total-input={dataAttribute}
         inputMode="numeric"
         min="0"
         value={value}
