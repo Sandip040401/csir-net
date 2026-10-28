@@ -16,14 +16,32 @@ import {
   EyeOff,
   Edit2,
   X,
+  Sun,
+  Moon,
   ChevronDown,
   ChevronUp,
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 
 const MISTAKE_OPTIONS = ['concept gap', 'silly mistake', 'time', 'guess'];
+
+const ThemeToggleBtn = () => {
+  const { isDark, toggleTheme } = useTheme();
+  return (
+    <button
+      type="button"
+      onClick={toggleTheme}
+      title={isDark ? 'Switch to Light Mode' : 'Switch to Night/Dark Mode'}
+      className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors flex items-center gap-1.5 text-xs font-medium"
+    >
+      {isDark ? <Sun className="w-3.5 h-3.5 text-amber-400" /> : <Moon className="w-3.5 h-3.5 text-slate-500" />}
+      <span className="hidden md:inline">{isDark ? 'Light' : 'Night'}</span>
+    </button>
+  );
+};
 
 export const DataLog = () => {
   const { user } = useAuth();
@@ -355,11 +373,13 @@ export const DataLog = () => {
           </button>
         </div>
 
-        {/* Save button & Target Indicator */}
-        <div className="flex items-center gap-3">
-          <span className="text-xs text-slate-500 hidden sm:inline">
-            Today: <strong className="text-slate-900">{dayTotals.total}</strong>/{dailyTarget} Qs
+        {/* Save button, Theme Toggle & Target Indicator */}
+        <div className="flex items-center gap-2 sm:gap-3">
+          <span className="text-xs text-slate-500 dark:text-slate-400 hidden sm:inline">
+            Today: <strong className="text-slate-900 dark:text-white">{dayTotals.total}</strong>/{dailyTarget} Qs
           </span>
+
+          <ThemeToggleBtn />
 
           <button
             type="button"
