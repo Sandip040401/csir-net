@@ -232,7 +232,11 @@ export const getTopicAnalytics = async (req, res, next) => {
     const user = req.user;
     const filter = buildFilter(user._id, req.query);
     const sessions = await Session.find(filter).populate('chapterId').lean();
-    const allTopics = await Topic.find({ hidden: { $ne: true } }).populate('chapterId').lean();
+    const topicFilter = { hidden: { $ne: true } };
+    if (req.query.chapterId) {
+      topicFilter.chapterId = req.query.chapterId;
+    }
+    const allTopics = await Topic.find(topicFilter).populate('chapterId').lean();
 
     const todayStr = new Date().toISOString().split('T')[0];
     const msInDay = 1000 * 60 * 60 * 24;
