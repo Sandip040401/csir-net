@@ -105,6 +105,8 @@ export const upsertSession = async (req, res, next) => {
           }
         }
 
+        const total = entry.total || 0;
+
         // Invariant 2: if Part A, bTotal = cTotal = 0
         let bTotal = entry.bTotal || 0;
         let cTotal = entry.cTotal || 0;
