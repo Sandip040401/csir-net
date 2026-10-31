@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
   ChevronLeft,
@@ -22,6 +22,26 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 
 const MISTAKE_OPTIONS = ['concept gap', 'silly mistake', 'time', 'guess'];
+
+const getTodayDateStr = () => {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, '0');
+  const d = String(now.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+};
+
+const shiftDateStr = (dateStr, days) => {
+  if (!dateStr) return getTodayDateStr();
+  const parts = dateStr.split('-').map(Number);
+  if (parts.length !== 3 || isNaN(parts[0])) return getTodayDateStr();
+  const date = new Date(parts[0], parts[1] - 1, parts[2]);
+  date.setDate(date.getDate() + days);
+  const ny = date.getFullYear();
+  const nm = String(date.getMonth() + 1).padStart(2, '0');
+  const nd = String(date.getDate()).padStart(2, '0');
+  return `${ny}-${nm}-${nd}`;
+};
 
 const ThemeToggleBtn = () => {
   const { isDark, toggleTheme } = useTheme();
@@ -51,26 +71,17 @@ export const DataLog = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  // Clear any legacy localStorage draft keys so they never interfere with database records
-  useEffect(() => {
-    try {
-      const keysToRemove = [];
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && (key.startsWith('draft_') || key === 'last_slot' || key === 'last_chapterId')) {
-          keysToRemove.push(key);
-        }
-      }
-      keysToRemove.forEach((k) => localStorage.removeItem(k));
-    } catch (e) {}
-  }, []);
-
   const [searchParams, setSearchParams] = useSearchParams();
   const dateParam = searchParams.get('date');
 
   const [selectedDate, setSelectedDate] = useState(() => {
-    return dateParam || new Date().toISOString().split('T')[0];
+    return dateParam || getTodayDateStr();
   });
+
+  const handleDateChange = (newDate) => {
+    setSelectedDate(newDate);
+    setSearchParams({ date: newDate }, { replace: true });
+  };
 
   useEffect(() => {
     if (dateParam && dateParam !== selectedDate) {
@@ -93,6 +104,8 @@ export const DataLog = () => {
 
   const [toastMessage, setToastMessage] = useState(null);
   const [lastSavedSnapshot, setLastSavedSnapshot] = useState(null);
+  const [isInitialized, setIsInitialized] = useState(false);
+  const activeKeyRef = useRef(`${selectedDate}_${slot}`);
 
   // Fetch Chapters list
   const { data: chaptersData } = useQuery({
@@ -116,60 +129,189 @@ export const DataLog = () => {
   const allTopics = allTopicsData || [];
 
   // Fetch existing sessions for the selected day
-  const { data: daySessionsData, refetch: refetchDaySessions } = useQuery({
+  const {
+    data: daySessionsData,
+    isLoading: isDaySessionsLoading,
+    refetch: refetchDaySessions,
+  } = useQuery({
     queryKey: ['sessions-by-date', selectedDate],
     queryFn: async () => {
       const res = await api.get(`/sessions/by-date/${selectedDate}`);
       return res.data.data;
     },
     enabled: Boolean(selectedDate),
+    staleTime: 5000,
   });
 
+  // 1. Structured baseline blocks from backend
+  const serverBlocks = useMemo(() => {
+    if (!daySessionsData || daySessionsData.length === 0) return [];
+    const matching = daySessionsData.filter((s) => s.slot === slot);
+    if (matching.length === 0) return [];
+    return matching.map((s, idx) => ({
+      id: `block-${idx + 1}`,
+      sessionId: s._id,
+      chapterId: s.chapterId?._id || s.chapterId,
+      timeTakenMin: s.timeTakenMin ?? '',
+      notes: s.notes || '',
+      entries: (s.entries || []).map((e) => ({
+        topicId: e.topicId?._id || e.topicId,
+        topicCode: e.topicCode || e.topicId?.code || '',
+        topicName: e.topicName || e.topicId?.name || '',
+        description: e.topicId?.description || '',
+        isCustom: e.topicId?.isCustom || false,
+        total: e.total ?? 0,
+        right: e.right ?? 0,
+        wrong: e.wrong ?? 0,
+        bTotal: e.bTotal ?? 0,
+        cTotal: e.cTotal ?? 0,
+        bRight: e.bRight ?? '',
+        skipped: e.skipped ?? 0,
+        mistakeTags: e.mistakeTags || [],
+        showTags: Boolean(e.mistakeTags && e.mistakeTags.length > 0),
+      })),
+    }));
+  }, [daySessionsData, slot]);
+
+  // 2. Server entries lookup for itemized diff
+  const serverEntriesMap = useMemo(() => {
+    const map = new Map();
+    serverBlocks.forEach((b) => {
+      (b.entries || []).forEach((e) => {
+        map.set(e.topicId, e);
+      });
+    });
+    return map;
+  }, [serverBlocks]);
+
+  // 3. Load from draft or backend on date/slot change (never wiping drafts!)
   useEffect(() => {
-    // 1. Check if there is saved session data for this selectedDate and slot
-    if (daySessionsData && daySessionsData.length > 0) {
-      const matching = daySessionsData.filter((s) => s.slot === slot);
-      if (matching.length > 0) {
-        const blocks = matching.map((s, idx) => ({
-          id: `block-${idx + 1}`,
-          sessionId: s._id,
-          chapterId: s.chapterId?._id || s.chapterId,
-          timeTakenMin: s.timeTakenMin ?? '',
-          notes: s.notes || '',
-          entries: (s.entries || []).map((e) => ({
-            topicId: e.topicId?._id || e.topicId,
-            topicCode: e.topicCode || e.topicId?.code || '',
-            topicName: e.topicName || e.topicId?.name || '',
-            description: e.topicId?.description || '',
-            isCustom: e.topicId?.isCustom || false,
-            total: e.total ?? 0,
-            right: e.right ?? 0,
-            wrong: e.wrong ?? 0,
-            bTotal: e.bTotal ?? 0,
-            cTotal: e.cTotal ?? 0,
-            bRight: e.bRight ?? '',
-            skipped: e.skipped ?? 0,
-            mistakeTags: e.mistakeTags || [],
-            showTags: Boolean(e.mistakeTags && e.mistakeTags.length > 0),
-          })),
-        }));
-        setChapterBlocks(blocks);
-        return;
+    const targetKey = `${selectedDate}_${slot}`;
+    const draftKey = `csir_draft_${targetKey}`;
+    let loadedFromDraft = false;
+
+    try {
+      const rawDraft = localStorage.getItem(draftKey);
+      if (rawDraft) {
+        const parsed = JSON.parse(rawDraft);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setChapterBlocks(parsed);
+          loadedFromDraft = true;
+          activeKeyRef.current = targetKey;
+          setIsInitialized(true);
+          return;
+        }
       }
+    } catch (e) {
+      console.warn('Failed to parse local draft:', e);
     }
 
-    // 2. No saved data for this date and slot: initialize clean empty block
-    const defaultChId = chapters[0]?._id || '';
-    setChapterBlocks([
-      {
-        id: 'block-1',
-        chapterId: defaultChId,
-        timeTakenMin: '',
-        notes: '',
-        entries: [],
-      },
-    ]);
-  }, [daySessionsData, selectedDate, slot, chapters]);
+    // If query is actively loading for this selectedDate, don't overwrite with blank fallback
+    if (isDaySessionsLoading) {
+      return;
+    }
+
+    if (serverBlocks.length > 0) {
+      setChapterBlocks(serverBlocks);
+    } else {
+      const defaultChId = chapters[0]?._id || '';
+      setChapterBlocks([
+        {
+          id: 'block-1',
+          chapterId: defaultChId,
+          timeTakenMin: '',
+          notes: '',
+          entries: [],
+        },
+      ]);
+    }
+
+    activeKeyRef.current = targetKey;
+    setIsInitialized(true);
+  }, [selectedDate, slot, serverBlocks, chapters, isDaySessionsLoading]);
+
+  // 4. Determine if there are unsaved local modifications vs server data
+  const hasUnsavedChanges = useMemo(() => {
+    if (!isInitialized) return false;
+
+    const isEmptyBlock =
+      chapterBlocks.length === 1 &&
+      (!chapterBlocks[0].entries || chapterBlocks[0].entries.length === 0) &&
+      !chapterBlocks[0].notes &&
+      !chapterBlocks[0].timeTakenMin;
+
+    if (serverBlocks.length === 0 && isEmptyBlock) {
+      return false;
+    }
+
+    const serialize = (blocks) =>
+      JSON.stringify(
+        blocks.map((b) => ({
+          chapterId: b.chapterId,
+          timeTakenMin: b.timeTakenMin || '',
+          notes: b.notes || '',
+          entries: (b.entries || []).map((e) => ({
+            topicId: e.topicId,
+            total: Number(e.total || 0),
+            right: Number(e.right || 0),
+            wrong: Number(e.wrong || 0),
+            bTotal: Number(e.bTotal || 0),
+            cTotal: Number(e.cTotal || 0),
+            skipped: Number(e.skipped || 0),
+            mistakeTags: [...(e.mistakeTags || [])].sort(),
+          })),
+        }))
+      );
+
+    return serialize(chapterBlocks) !== serialize(serverBlocks);
+  }, [chapterBlocks, serverBlocks, isInitialized]);
+
+  // 5. Automatically persist local draft to localStorage whenever changes occur
+  useEffect(() => {
+    if (!isInitialized) return;
+    const currentKey = `${selectedDate}_${slot}`;
+
+    // CRUCIAL: Do not save if chapterBlocks has not synced with the active (date, slot)!
+    if (activeKeyRef.current !== currentKey) {
+      return;
+    }
+
+    const draftKey = `csir_draft_${currentKey}`;
+    if (hasUnsavedChanges) {
+      try {
+        localStorage.setItem(draftKey, JSON.stringify(chapterBlocks));
+      } catch (e) {}
+    } else {
+      try {
+        localStorage.removeItem(draftKey);
+      } catch (e) {}
+    }
+  }, [chapterBlocks, hasUnsavedChanges, selectedDate, slot, isInitialized]);
+
+  const handleDiscardDraft = () => {
+    const currentKey = `${selectedDate}_${slot}`;
+    const draftKey = `csir_draft_${currentKey}`;
+    try {
+      localStorage.removeItem(draftKey);
+    } catch (e) {}
+
+    if (serverBlocks.length > 0) {
+      setChapterBlocks(serverBlocks);
+    } else {
+      const defaultChId = chapters[0]?._id || '';
+      setChapterBlocks([
+        {
+          id: 'block-1',
+          chapterId: defaultChId,
+          timeTakenMin: '',
+          notes: '',
+          entries: [],
+        },
+      ]);
+    }
+    activeKeyRef.current = currentKey;
+    showToast('Discarded draft and restored server data.', 'info');
+  };
 
   const handleSlotChange = (newSlot) => {
     setSlot(newSlot);
@@ -177,9 +319,8 @@ export const DataLog = () => {
   };
 
   const shiftDay = (days) => {
-    const d = new Date(selectedDate);
-    d.setDate(d.getDate() + days);
-    setSelectedDate(d.toISOString().split('T')[0]);
+    const nextDate = shiftDateStr(selectedDate, days);
+    handleDateChange(nextDate);
   };
 
   const updateBlock = (blockId, updates) => {
@@ -248,6 +389,10 @@ export const DataLog = () => {
       return savedCount;
     },
     onSuccess: (count) => {
+      const draftKey = `csir_draft_${selectedDate}_${slot}`;
+      try {
+        localStorage.removeItem(draftKey);
+      } catch (e) {}
       refetchDaySessions();
       queryClient.invalidateQueries({ queryKey: ['quick-kpis'] });
       queryClient.invalidateQueries({ queryKey: ['analytics-overview'] });
@@ -379,7 +524,7 @@ export const DataLog = () => {
           <input
             type="date"
             value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
+            onChange={(e) => handleDateChange(e.target.value)}
             className="bg-slate-50 dark:bg-[#161f30] border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1 text-xs text-slate-800 dark:text-slate-200 font-medium focus:outline-none focus:border-blue-500"
           />
 
@@ -392,7 +537,7 @@ export const DataLog = () => {
           </button>
 
           <button
-            onClick={() => setSelectedDate(new Date().toISOString().split('T')[0])}
+            onClick={() => handleDateChange(getTodayDateStr())}
             className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline px-1.5"
           >
             Today
@@ -437,33 +582,84 @@ export const DataLog = () => {
             type="button"
             onClick={() => saveMutation.mutate()}
             disabled={saveMutation.isPending}
-            className="px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold text-xs shadow-xs flex items-center gap-1.5 transition-all active:scale-95"
+            className={`px-4 py-1.5 rounded-lg text-white font-semibold text-xs shadow-xs flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer ${
+              hasUnsavedChanges
+                ? 'bg-amber-600 hover:bg-amber-700 ring-2 ring-amber-400 ring-offset-1 dark:ring-offset-[#111827]'
+                : 'bg-blue-600 hover:bg-blue-700 disabled:opacity-50'
+            }`}
           >
+            {hasUnsavedChanges && (
+              <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
+            )}
             <Save className="w-3.5 h-3.5" />
-            <span>{saveMutation.isPending ? 'Saving...' : 'Save (Ctrl+Enter)'}</span>
+            <span>{saveMutation.isPending ? 'Saving...' : hasUnsavedChanges ? 'Save Changes' : 'Save'}</span>
+            <span className="text-[10px] opacity-75 hidden md:inline">(Ctrl+Enter)</span>
           </button>
         </div>
       </div>
 
+      {/* Unsaved Draft & Backend Mismatch Notification Banner */}
+      {hasUnsavedChanges && (
+        <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800/70 rounded-xl px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 shadow-xs">
+          <div className="flex items-center gap-2.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse shrink-0" />
+            <div>
+              <span className="text-xs font-bold text-amber-900 dark:text-amber-200">
+                Unsaved local changes ({slot === 'morning' ? 'Morning Practice' : 'Night Mock'})
+              </span>
+              <p className="text-[11px] text-amber-700 dark:text-amber-300/80">
+                Data is preserved in your local draft and will NOT be erased on date switch or reload. Unsaved rows are tagged below.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleDiscardDraft}
+              className="px-2.5 py-1 text-xs rounded-lg border border-amber-300 dark:border-amber-700 text-amber-800 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/40 font-medium transition-colors cursor-pointer"
+            >
+              Discard Draft
+            </button>
+            <button
+              type="button"
+              onClick={() => saveMutation.mutate()}
+              disabled={saveMutation.isPending}
+              className="px-3 py-1 text-xs rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-semibold transition-colors flex items-center gap-1.5 shadow-2xs cursor-pointer"
+            >
+              <Save className="w-3.5 h-3.5" />
+              <span>Save to Server</span>
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Chapter Blocks */}
-      <div className="space-y-4">
-        {chapterBlocks.map((block, bIdx) => (
-          <ChapterEntryBlock
-            key={block.id}
-            blockIndex={bIdx}
-            block={block}
-            chapters={chapters}
-            allTopics={allTopics}
-            slot={slot}
-            kind={kind}
-            selectedDate={selectedDate}
-            onUpdateBlock={(updates) => updateBlock(block.id, updates)}
-            onRemoveBlock={() => removeChapterBlock(block.id)}
-            refetchAllTopics={refetchAllTopics}
-            refetchDaySessions={refetchDaySessions}
-          />
-        ))}
-      </div>
+      {isDaySessionsLoading && !localStorage.getItem(`csir_draft_${selectedDate}_${slot}`) ? (
+        <div className="py-12 px-4 text-center bg-white dark:bg-[#111827] rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col items-center justify-center gap-2">
+          <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+          <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Loading session for {selectedDate}...</p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {chapterBlocks.map((block, bIdx) => (
+            <ChapterEntryBlock
+              key={block.id}
+              blockIndex={bIdx}
+              block={block}
+              chapters={chapters}
+              allTopics={allTopics}
+              slot={slot}
+              kind={kind}
+              selectedDate={selectedDate}
+              serverEntriesMap={serverEntriesMap}
+              onUpdateBlock={(updates) => updateBlock(block.id, updates)}
+              onRemoveBlock={() => removeChapterBlock(block.id)}
+              refetchAllTopics={refetchAllTopics}
+              refetchDaySessions={refetchDaySessions}
+            />
+          ))}
+        </div>
+      )}
 
       {/* "+ Add another chapter" Button */}
       <div className="flex justify-center pt-1">
@@ -489,6 +685,7 @@ const ChapterEntryBlock = ({
   slot,
   kind,
   selectedDate,
+  serverEntriesMap,
   onUpdateBlock,
   onRemoveBlock,
   refetchAllTopics,
@@ -965,20 +1162,56 @@ const ChapterEntryBlock = ({
                 const r = Number(entry.right || 0);
                 const acc = tot > 0 ? Math.round((r / tot) * 100) : 0;
 
+                const serverEntry = serverEntriesMap ? serverEntriesMap.get(entry.topicId) : null;
+                let syncStatus = 'synced';
+                if (serverEntriesMap) {
+                  if (!serverEntry) {
+                    syncStatus = 'added';
+                  } else {
+                    const isModified =
+                      Number(entry.total || 0) !== Number(serverEntry.total || 0) ||
+                      Number(entry.right || 0) !== Number(serverEntry.right || 0) ||
+                      Number(entry.wrong || 0) !== Number(serverEntry.wrong || 0) ||
+                      Number(entry.bTotal || 0) !== Number(serverEntry.bTotal || 0) ||
+                      Number(entry.cTotal || 0) !== Number(serverEntry.cTotal || 0) ||
+                      Number(entry.skipped || 0) !== Number(serverEntry.skipped || 0) ||
+                      JSON.stringify(entry.mistakeTags || []) !== JSON.stringify(serverEntry.mistakeTags || []);
+                    if (isModified) syncStatus = 'modified';
+                  }
+                }
+
                 return (
                   <React.Fragment key={entry.topicId || idx}>
-                    <tr className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
+                    <tr
+                      className={`transition-colors ${
+                        syncStatus === 'added'
+                          ? 'bg-amber-50/50 dark:bg-amber-950/20 border-l-4 border-l-amber-500'
+                          : syncStatus === 'modified'
+                          ? 'bg-blue-50/40 dark:bg-blue-950/20 border-l-4 border-l-blue-500'
+                          : 'hover:bg-slate-50/50 dark:hover:bg-slate-800/40'
+                      }`}
+                    >
                       <td className="py-1.5 px-3">
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-1.5 flex-wrap">
                           <span className="font-mono font-bold text-blue-600 dark:text-blue-400 text-[10px]">
                             {entry.topicCode}
                           </span>
-                          <span className="font-medium text-slate-900 dark:text-slate-100 truncate max-w-[220px]">
+                          <span className="font-medium text-slate-900 dark:text-slate-100 truncate max-w-[200px]">
                             {entry.topicName}
                           </span>
                           {entry.isCustom && (
-                            <span className="text-[8px] px-1 rounded bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800 font-bold uppercase">
+                            <span className="text-[8px] px-1 rounded bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800 font-bold uppercase shrink-0">
                               custom
+                            </span>
+                          )}
+                          {syncStatus === 'added' && (
+                            <span className="text-[8.5px] px-1.5 py-0.2 rounded bg-amber-100 dark:bg-amber-900/60 text-amber-800 dark:text-amber-300 font-bold border border-amber-300 dark:border-amber-700/80 shrink-0">
+                              ● Unsaved Topic
+                            </span>
+                          )}
+                          {syncStatus === 'modified' && (
+                            <span className="text-[8.5px] px-1.5 py-0.2 rounded bg-blue-100 dark:bg-blue-900/60 text-blue-800 dark:text-blue-300 font-bold border border-blue-300 dark:border-blue-700/80 shrink-0">
+                              ● Unsaved Changes
                             </span>
                           )}
                           {entry.description && (
@@ -1004,6 +1237,7 @@ const ChapterEntryBlock = ({
                         <StepperInput
                           dataAttribute={entry.topicId}
                           value={entry.total}
+                          className={serverEntry && Number(entry.total || 0) !== Number(serverEntry.total || 0) ? 'ring-1 ring-blue-500 rounded' : ''}
                           onChange={(v) => updateEntryCell(idx, 'total', v)}
                           onStep={(d) => stepValue(idx, 'total', d)}
                         />
@@ -1012,7 +1246,11 @@ const ChapterEntryBlock = ({
                       <td className="py-1 px-1 text-center">
                         <StepperInput
                           value={entry.right}
-                          className="text-emerald-600 dark:text-emerald-400 font-bold"
+                          className={`font-bold ${
+                            serverEntry && Number(entry.right || 0) !== Number(serverEntry.right || 0)
+                              ? 'ring-1 ring-blue-500 rounded text-emerald-600 dark:text-emerald-400'
+                              : 'text-emerald-600 dark:text-emerald-400'
+                          }`}
                           onChange={(v) => updateEntryCell(idx, 'right', v)}
                           onStep={(d) => stepValue(idx, 'right', d)}
                         />
@@ -1021,7 +1259,11 @@ const ChapterEntryBlock = ({
                       <td className="py-1 px-1 text-center">
                         <StepperInput
                           value={entry.wrong}
-                          className="text-red-600 dark:text-red-400 font-bold"
+                          className={`font-bold ${
+                            serverEntry && Number(entry.wrong || 0) !== Number(serverEntry.wrong || 0)
+                              ? 'ring-1 ring-blue-500 rounded text-red-600 dark:text-red-400'
+                              : 'text-red-600 dark:text-red-400'
+                          }`}
                           onChange={(v) => updateEntryCell(idx, 'wrong', v)}
                           onStep={(d) => stepValue(idx, 'wrong', d)}
                         />
@@ -1032,6 +1274,7 @@ const ChapterEntryBlock = ({
                           <td className="py-1 px-1 text-center">
                             <StepperInput
                               value={entry.bTotal}
+                              className={serverEntry && Number(entry.bTotal || 0) !== Number(serverEntry.bTotal || 0) ? 'ring-1 ring-blue-500 rounded' : ''}
                               onChange={(v) => updateEntryCell(idx, 'bTotal', v)}
                               onStep={(d) => stepValue(idx, 'bTotal', d)}
                             />
@@ -1039,6 +1282,7 @@ const ChapterEntryBlock = ({
                           <td className="py-1 px-1 text-center">
                             <StepperInput
                               value={entry.cTotal}
+                              className={serverEntry && Number(entry.cTotal || 0) !== Number(serverEntry.cTotal || 0) ? 'ring-1 ring-blue-500 rounded' : ''}
                               onChange={(v) => updateEntryCell(idx, 'cTotal', v)}
                               onStep={(d) => stepValue(idx, 'cTotal', d)}
                             />

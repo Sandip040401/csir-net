@@ -4,21 +4,46 @@ import { useQuery } from '@tanstack/react-query';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import api from '../api/client';
 
+const formatLocalDate = (y, m, d) => {
+  const mm = String(m + 1).padStart(2, '0');
+  const dd = String(d).padStart(2, '0');
+  return `${y}-${mm}-${dd}`;
+};
+
 export const SidebarCalendar = ({ collapsed }) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const currentDateParam = searchParams.get('date');
 
   const [currentMonthDate, setCurrentMonthDate] = useState(() => {
+    if (currentDateParam) {
+      const parts = currentDateParam.split('-').map(Number);
+      if (parts.length === 3 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+        return new Date(parts[0], parts[1] - 1, 1);
+      }
+    }
     return new Date();
   });
 
   const year = currentMonthDate.getFullYear();
   const month = currentMonthDate.getMonth(); // 0-indexed
 
-  // Format month range for querying sessions
-  const startOfMonth = new Date(year, month, 1).toISOString().split('T')[0];
-  const endOfMonth = new Date(year, month + 1, 0).toISOString().split('T')[0];
+  // Auto-sync calendar month when currentDateParam changes
+  React.useEffect(() => {
+    if (currentDateParam) {
+      const parts = currentDateParam.split('-').map(Number);
+      if (parts.length === 3 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+        if (parts[0] !== year || parts[1] - 1 !== month) {
+          setCurrentMonthDate(new Date(parts[0], parts[1] - 1, 1));
+        }
+      }
+    }
+  }, [currentDateParam]);
+
+  // Format month range without UTC shift issues
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const startOfMonth = formatLocalDate(year, month, 1);
+  const endOfMonth = formatLocalDate(year, month, daysInMonth);
 
   // Fetch all sessions in the selected month
   const { data: monthSessionsData } = useQuery({
@@ -29,7 +54,7 @@ export const SidebarCalendar = ({ collapsed }) => {
       });
       return res.data.data;
     },
-    staleTime: 10000,
+    staleTime: 5000,
   });
 
   const sessions = monthSessionsData || [];
@@ -41,18 +66,16 @@ export const SidebarCalendar = ({ collapsed }) => {
     if (!dateStatusMap[s.date]) {
       dateStatusMap[s.date] = { morning: false, night: false };
     }
-    // Has non-empty entries
-    const hasData = s.entries && s.entries.length > 0;
-    if (s.slot === 'morning' && hasData) {
-      dateStatusMap[s.date].morning = true;
-    } else if (s.slot === 'night' && hasData) {
-      dateStatusMap[s.date].night = true;
+    // Has non-empty entries with questions
+    const hasData = Array.isArray(s.entries) && s.entries.some((e) => Number(e.total || 0) > 0);
+    if (hasData) {
+      if (s.slot === 'morning') dateStatusMap[s.date].morning = true;
+      if (s.slot === 'night') dateStatusMap[s.date].night = true;
     }
   });
 
   // Calculate calendar grid cells
   const firstDayOfWeek = new Date(year, month, 1).getDay(); // 0 (Sun) to 6 (Sat)
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
 
   const prevMonth = (e) => {
     e.stopPropagation();
@@ -70,13 +93,24 @@ export const SidebarCalendar = ({ collapsed }) => {
   ];
 
   const handleDateClick = (day) => {
-    const mm = String(month + 1).padStart(2, '0');
-    const dd = String(day).padStart(2, '0');
-    const dateStr = `${year}-${mm}-${dd}`;
+    const dateStr = formatLocalDate(year, month, day);
     navigate(`/?date=${dateStr}`);
   };
 
-  const todayStr = new Date().toISOString().split('T')[0];
+  const now = new Date();
+  const todayStr = formatLocalDate(now.getFullYear(), now.getMonth(), now.getDate());
+
+  // Check if a date has an unsaved draft in localStorage with questions
+  const checkHasDraft = (dateStr) => {
+    try {
+      return Boolean(
+        localStorage.getItem(`csir_draft_${dateStr}_morning`) ||
+        localStorage.getItem(`csir_draft_${dateStr}_night`)
+      );
+    } catch (e) {
+      return false;
+    }
+  };
 
   if (collapsed) {
     // Mini indicator when sidebar is collapsed
@@ -84,7 +118,7 @@ export const SidebarCalendar = ({ collapsed }) => {
     return (
       <div
         className="my-3 flex flex-col items-center justify-center cursor-pointer p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-        title={`Today: Morning ${todayStatus.morning ? 'Uploaded' : 'Pending'} | Night ${todayStatus.night ? 'Uploaded' : 'Pending'}`}
+        title={`Today: Morning ${todayStatus.morning ? 'Uploaded' : 'Missing'} | Night ${todayStatus.night ? 'Uploaded' : 'Missing'}`}
         onClick={() => navigate(`/?date=${todayStr}`)}
       >
         <div className="w-8 h-8 rounded-lg overflow-hidden border border-slate-300 dark:border-slate-700 relative shadow-2xs">
@@ -154,30 +188,33 @@ export const SidebarCalendar = ({ collapsed }) => {
 
         {Array.from({ length: daysInMonth }).map((_, i) => {
           const day = i + 1;
-          const mm = String(month + 1).padStart(2, '0');
-          const dd = String(day).padStart(2, '0');
-          const dateStr = `${year}-${mm}-${dd}`;
+          const dateStr = formatLocalDate(year, month, day);
           const isSelected = dateStr === (currentDateParam || todayStr);
           const isToday = dateStr === todayStr;
+          const isPastOrToday = dateStr <= todayStr;
+          const hasDraft = checkHasDraft(dateStr);
 
           const status = dateStatusMap[dateStr];
-          const hasSavedRecord = Boolean(status);
           const morningGreen = status?.morning === true;
           const nightGreen = status?.night === true;
+
+          // For all past days and today: show diagonal split with Green (uploaded) and Red (missing)!
+          // For future days: show clean neutral text unless recorded in advance.
+          const showColors = isPastOrToday || morningGreen || nightGreen;
 
           return (
             <button
               key={dateStr}
               type="button"
               onClick={() => handleDateClick(day)}
-              title={`${dateStr}\nMorning Practice: ${morningGreen ? 'Uploaded (Green)' : hasSavedRecord ? 'Missing (Red)' : 'None'}\nNight Mock: ${nightGreen ? 'Uploaded (Green)' : hasSavedRecord ? 'Missing (Red)' : 'None'}`}
+              title={`${dateStr}\nMorning Practice: ${morningGreen ? 'Uploaded (Green)' : isPastOrToday ? 'Missing (Red)' : 'Upcoming'}\nNight Mock: ${nightGreen ? 'Uploaded (Green)' : isPastOrToday ? 'Missing (Red)' : 'Upcoming'}${hasDraft ? '\n⚠️ Has unsaved local draft' : ''}`}
               className={`w-6 h-6 rounded-md relative overflow-hidden flex items-center justify-center text-[10px] font-bold transition-all ${
                 isSelected
                   ? 'ring-2 ring-blue-500 ring-offset-1 dark:ring-offset-[#161f30] z-10 scale-105'
                   : 'hover:scale-105'
               } ${isToday ? 'font-extrabold underline decoration-blue-500' : ''}`}
             >
-              {hasSavedRecord ? (
+              {showColors ? (
                 <>
                   {/* Diagonal Split SVG: Left/Top is Morning, Right/Bottom is Night */}
                   <svg className="absolute inset-0 w-full h-full" viewBox="0 0 24 24">
@@ -211,6 +248,14 @@ export const SidebarCalendar = ({ collapsed }) => {
                   {day}
                 </span>
               )}
+
+              {/* Unsaved draft indicator dot */}
+              {hasDraft && (
+                <span
+                  className="absolute top-0 right-0 w-2 h-2 rounded-full bg-amber-400 border border-white dark:border-slate-900 z-20 shadow-xs"
+                  title="Unsaved local draft"
+                />
+              )}
             </button>
           );
         })}
@@ -225,6 +270,10 @@ export const SidebarCalendar = ({ collapsed }) => {
         <div className="flex items-center gap-1">
           <span className="w-2 h-2 rounded-full bg-red-500 shrink-0" />
           <span>Missing</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0" />
+          <span>Draft</span>
         </div>
         <span className="text-[7.5px] text-slate-400">◤M ◢N</span>
       </div>
