@@ -35,6 +35,5 @@ const chapterSchema = new mongoose.Schema(
 );
 
 chapterSchema.index({ order: 1 });
-chapterSchema.index({ no: 1 });
 
 export const Chapter = mongoose.model('Chapter', chapterSchema);

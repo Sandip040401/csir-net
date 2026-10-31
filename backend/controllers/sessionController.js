@@ -149,7 +149,7 @@ export const upsertSession = async (req, res, next) => {
         notes: data.notes || '',
         entries: enrichedEntries,
       },
-      { upsert: true, new: true, setDefaultsOnInsert: true }
+      { upsert: true, returnDocument: 'after', new: true, setDefaultsOnInsert: true }
     )
       .populate('chapterId', 'no name isPartA weight')
       .populate('entries.topicId', 'code name description');
